@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>[必填] 替换为 PPT 标题 · Deck Title</title>
+
+<!-- ═══════════════════════════════════════════════════
+     FONTS
+     三层字体分工: Display(衬线) / Body(非衬线) / Mono(等宽)
+     ═══════════════════════════════════════════════════ -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,800;0,900;1,400;1,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- font-display:swap is set via the display=swap param above -->
+<!-- Fallback detection runs in JS below -->
+
+<!-- ICONS: Lucide (严禁 emoji) -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════
+   DESIGN KERNEL · 设计内核
+   所有风格共享的不可违反规则
+   ═══════════════════════════════════════════════════ */
+
+/* --- 主题色 Token (墨刊 · 经典墨水 方案) ---
+   替换时整体替换此块，其他 CSS 都走 var() */
+:root {
+  /* 核心四色 */
+  --ink: #0A0A0B;
+  --ink-rgb: 10, 10, 11;
+  --paper: #F5F1EB;
+  --paper-rgb: 245, 241, 235;
+
+  /* 功能色 */
+  --accent: #2D5A88;
+  --accent-rgb: 45, 90, 136;
+  --highlight: rgba(var(--accent-rgb), 0.12);
+
+  /* 层级色 */
+  --paper-tint: #EDE8E0;
+  --ink-muted: rgba(var(--ink-rgb), 0.55);
+  --ink-faint: rgba(var(--ink-rgb), 0.08);
+
+  /* 语义色 */
+  --chrome-bg: rgba(var(--ink-rgb), 0.04);
+  --divider: rgba(var(--ink-rgb), 0.12);
+
+  /* 字体栈 */
+  --serif-zh: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --serif-en: "Playfair Display", "Georgia", serif;
+  --sans-zh: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  --sans-en: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Consolas", monospace;
+
+  /* 间距 token */
+  --sp-2: 4px; --sp-3: 8px; --sp-4: 12px; --sp-5: 16px;
+  --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 48px;
+  --sp-10: 64px; --sp-11: 80px; --sp-12: 96px; --sp-13: 160px;
+
+  /* 动效 */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --duration-fast: 0.3s;
+  --duration-normal: 0.6s;
+  --duration-slow: 1s;
+}
+
+/* ═══════════════════════════════════════════════════
+   VIEWPORT LOCK · 视口锁定
+   ═══════════════════════════════════════════════════ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; overflow: hidden; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans-zh), var(--sans-en);
+  font-weight: 400;
+  font-size: clamp(0.75rem, 1.3vw, 1.1rem);
+  line-height: 1.65;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ═══════════════════════════════════════════════════
+   SLIDE CONTAINER · 幻灯片容器
+   ═══════════════════════════════════════════════════ */
+.deck {
+  display: flex;
+  width: max-content;
+  height: 100vh; height: 100dvh;
+  transition: transform 0.65s var(--ease-out-expo);
+  will-change: transform;
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh; height: 100dvh;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: clamp(1.5rem, 3.5vw, 4rem);
+  flex-shrink: 0;
+}
+
+/* 暗色/亮色主题 */
+.slide[data-theme="light"] {
+  background: var(--paper);
+  color: var(--ink);
+}
+.slide[data-theme="dark"] {
+  background: var(--ink);
+  color: var(--paper);
+  --divider: rgba(var(--paper-rgb), 0.12);
+  --ink-muted: rgba(var(--paper-rgb), 0.55);
+  --ink-faint: rgba(var(--paper-rgb), 0.08);
+  --chrome-bg: rgba(var(--paper-rgb), 0.04);
+}
+
+/* Hero 页: WebGL 背景透出 */
+.slide.hero { z-index: 1; }
+.slide.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.slide.hero[data-theme="light"]::before {
+  background: rgba(var(--paper-rgb), 0.86);
+}
+.slide.hero[data-theme="dark"]::before {
+  background: rgba(var(--ink-rgb), 0.84);
+}
+.slide.hero > * { position: relative; z-index: 1; }
+
+/* 底部安全区 */
+.nav-safe-bottom { max-height: 93vh; }
+.nav-safe-bottom-tight { max-height: 90vh; }
+
+/* ═══════════════════════════════════════════════════
+   TYPOGRAPHY · 排版系统
+   ═══════════════════════════════════════════════════ */
+
+/* --- Display 层 (衬线大标题) --- */
+.h-hero {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: min(6.4vw, 11.2vh);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.h-hero-en {
+  font-family: var(--serif-en);
+  font-size: clamp(3rem, 8vw, 7rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.display-zh {
+  font-family: var(--serif-zh);
+  font-size: min(7.8vw, 13vh);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.h-xl {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: min(4.6vw, 8.2vh);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.h-md {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: min(3.2vw, 5.6vh);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.h-sub {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: clamp(1rem, 1.9vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* --- Body 层 (非衬线正文) --- */
+.lead {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: clamp(0.9rem, 1.9vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.7;
+}
+.body-zh {
+  font-family: var(--sans-zh), var(--sans-en);
+  font-size: clamp(0.75rem, 1.22vw, 1.05rem);
+  font-weight: 400;
+  line-height: 1.7;
+}
+.body-serif {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: clamp(0.8rem, 1.3vw, 1.1rem);
+  font-weight: 400;
+  line-height: 1.75;
+}
+
+/* --- Mono 层 (等宽元数据) --- */
+.kicker {
+  font-family: var(--mono);
+  font-size: clamp(0.55rem, 0.85vw, 0.8rem);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.65;
+}
+.meta {
+  font-family: var(--mono);
+  font-size: clamp(0.5rem, 0.88vw, 0.78rem);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --- 数字 --- */
+.num-mega {
+  font-family: var(--serif-en);
+  font-size: min(10vw, 18vh);
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.04em;
+}
+.num-big {
+  font-family: var(--serif-en);
+  font-size: min(5.5vw, 10vh);
+  font-weight: 700;
+  line-height: 1;
+}
+.num-mid {
+  font-family: var(--serif-en);
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-weight: 700;
+}
+.num-unit {
+  font-size: 0.4em;
+  opacity: 0.5;
+  font-style: normal;
+  margin-left: 0.1em;
+}
+
+/* 强调: 英文词用 Playfair 斜体 */
+em.en {
+  font-family: var(--serif-en);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* 荧光标记 */
+.hi {
+  background: linear-gradient(to top,
+    rgba(var(--accent-rgb), 0.25) 0%,
+    rgba(var(--accent-rgb), 0.25) 35%,
+    transparent 35%);
+}
+.slide[data-theme="dark"] .hi {
+  background: linear-gradient(to top,
+    rgba(var(--accent-rgb), 0.4) 0%,
+    rgba(var(--accent-rgb), 0.4) 35%,
+    transparent 35%);
+}
+
+/* ═══════════════════════════════════════════════════
+   CHROME & FOOT · 页眉页脚
+   ═══════════════════════════════════════════════════ */
+.chrome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--sp-5);
+  font-family: var(--mono);
+  font-size: clamp(0.5rem, 0.75vw, 0.7rem);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.45;
+  flex-shrink: 0;
+}
+.chrome .sep { display: inline-block; width: 1px; height: 1em; background: currentColor; opacity: 0.3; margin: 0 0.8em; vertical-align: middle; }
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--sp-4);
+  margin-top: auto;
+  font-family: var(--mono);
+  font-size: clamp(0.45rem, 0.65vw, 0.6rem);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.35;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════
+   GRID SYSTEM · 网格系统
+   ═══════════════════════════════════════════════════ */
+/* .slide already has overflow:hidden as safety net — slide-body uses visible
+   to prevent silent text clipping. Content that exceeds will be caught by
+   the slide's own overflow:hidden at the outermost boundary. */
+.slide-body { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: visible; min-height: 0; }
+
+/* 经典两栏 */
+.grid-2-7-5 { display: grid; grid-template-columns: 7fr 5fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-2-6-6 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-2-8-4 { display: grid; grid-template-columns: 8fr 4fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-2-5-7 { display: grid; grid-template-columns: 5fr 7fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+
+/* 等分网格 */
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.8rem, 2vw, 2rem); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.8rem, 2vw, 2rem); }
+.grid-6 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.6rem, 1.5vw, 1.5rem); }
+
+/* ═══════════════════════════════════════════════════
+   COMPONENTS · 通用组件
+   ═══════════════════════════════════════════════════ */
+
+/* --- Callout 引用框 --- */
+.callout {
+  border-left: 3px solid rgba(var(--accent-rgb), 0.5);
+  padding-left: clamp(1rem, 2.5vw, 2.5rem);
+}
+.callout .q-big {
+  font-family: var(--serif-zh), var(--serif-en);
+  font-size: clamp(1.2rem, 2.8vw, 2.4rem);
+  font-weight: 500;
+  line-height: 1.5;
+}
+.callout .cite {
+  display: block;
+  margin-top: var(--sp-5);
+  font-family: var(--mono);
+  font-size: clamp(0.55rem, 0.9vw, 0.8rem);
+  opacity: 0.5;
+}
+
+/* --- Stat Card 数据卡 --- */
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+.stat-label {
+  font-family: var(--mono);
+  font-size: clamp(0.5rem, 0.8vw, 0.75rem);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.55;
+}
+.stat-num {
+  font-family: var(--serif-en);
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+.stat-note {
+  font-family: var(--sans-zh);
+  font-size: clamp(0.6rem, 1vw, 0.85rem);
+  opacity: 0.6;
+  line-height: 1.4;
+}
+
+/* --- Bar Tower 柱状塔 --- */
+.bar-tower-row { display: flex; gap: clamp(0.5rem, 1.5vw, 1.5rem); align-items: flex-end; height: 55vh; }
+.bar-tower {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--sp-3);
+}
+.bar-tower .bar-fill {
+  width: 100%;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+  transition: height 0.8s var(--ease-out-expo);
+}
+.bar-tower .bar-label { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); text-transform: uppercase; opacity: 0.6; }
+.bar-tower .bar-value { font-family: var(--serif-en); font-size: clamp(1rem, 2vw, 1.5rem); font-weight: 700; }
+
+/* --- H-Bar 横向柱图 --- */
+.h-bar-chart { display: flex; flex-direction: column; gap: var(--sp-4); }
+.bar-row {
+  display: grid;
+  grid-template-columns: clamp(80px, 12vw, 160px) 1fr clamp(40px, 5vw, 60px);
+  gap: var(--sp-4);
+  align-items: center;
+}
+.bar-row .bar-name { font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.9rem); text-align: right; }
+.bar-row .bar-track { height: clamp(16px, 2.5vh, 28px); background: var(--ink-faint); border-radius: 2px; overflow: hidden; }
+.bar-row .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s var(--ease-out-expo); }
+.bar-row .bar-val { font-family: var(--mono); font-size: clamp(0.55rem, 0.85vw, 0.75rem); opacity: 0.7; }
+
+/* --- Timeline 时间线 --- */
+.timeline-v { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: clamp(1.5rem, 3vw, 3rem); }
+.timeline-v::before {
+  content: "";
+  position: absolute;
+  left: 6px; top: 8px; bottom: 8px;
+  width: 1px;
+  background: var(--divider);
+}
+.tl-node { position: relative; padding: var(--sp-4) 0; }
+.tl-node::before {
+  content: "";
+  position: absolute;
+  left: calc(-1 * clamp(1.5rem, 3vw, 3rem) + 2px);
+  top: calc(var(--sp-4) + 6px);
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.tl-node .tl-date { font-family: var(--mono); font-size: clamp(0.5rem, 0.75vw, 0.7rem); text-transform: uppercase; opacity: 0.5; margin-bottom: var(--sp-2); }
+.tl-node .tl-title { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(0.9rem, 1.5vw, 1.3rem); font-weight: 600; margin-bottom: var(--sp-2); }
+.tl-node .tl-desc { font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.85rem); opacity: 0.65; }
+
+.timeline-h { display: flex; align-items: flex-start; gap: 0; position: relative; }
+.timeline-h::before {
+  content: "";
+  position: absolute;
+  top: 6px; left: 0; right: 0;
+  height: 1px;
+  background: var(--divider);
+}
+.tl-h-node { flex: 1; position: relative; padding-top: clamp(1.5rem, 3vh, 2.5rem); }
+.tl-h-node::before {
+  content: "";
+  position: absolute;
+  top: 2px; left: 0;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* --- Matrix 矩阵 --- */
+.matrix-fill {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  gap: 1px;
+  background: var(--divider);
+}
+.matrix-cell {
+  background: var(--paper);
+  padding: clamp(0.6rem, 1.5vw, 1.2rem);
+}
+.slide[data-theme="dark"] .matrix-cell { background: var(--ink); }
+
+/* --- Rowline 表格行 --- */
+.rowline {
+  display: grid;
+  grid-template-columns: clamp(100px, 15vw, 200px) 1fr auto;
+  gap: var(--sp-5);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--divider);
+  align-items: baseline;
+}
+.rowline:first-child { border-top: 1px solid var(--divider); }
+.rowline .k { font-family: var(--serif-zh), var(--serif-en); font-weight: 600; font-size: clamp(0.8rem, 1.2vw, 1rem); }
+.rowline .v { font-family: var(--sans-zh); font-size: clamp(0.7rem, 1vw, 0.9rem); opacity: 0.75; }
+.rowline .m { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); text-transform: uppercase; opacity: 0.45; text-align: right; }
+
+/* --- Pillar 支柱卡 --- */
+.pillar { display: flex; flex-direction: column; gap: var(--sp-4); }
+.pillar .ic {
+  font-family: var(--mono);
+  font-size: clamp(0.7rem, 1.1vw, 1rem);
+  opacity: 0.45;
+  margin-bottom: var(--sp-2);
+}
+.pillar .t { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(1rem, 1.8vw, 1.4rem); font-weight: 600; line-height: 1.3; }
+.pillar .d { font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.85rem); opacity: 0.65; line-height: 1.6; }
+
+/* --- Tag 标签 --- */
+.tag {
+  display: inline-block;
+  padding: var(--sp-3) var(--sp-5);
+  border: 1px solid var(--divider);
+  font-family: var(--sans-zh);
+  font-size: clamp(0.65rem, 1vw, 0.85rem);
+}
+
+/* --- Feature Cards 特性卡 --- */
+.feature-card {
+  padding: clamp(1rem, 2vw, 2rem);
+  background: var(--ink-faint);
+  display: flex; flex-direction: column;
+  gap: var(--sp-4);
+}
+.slide[data-theme="dark"] .feature-card { background: rgba(var(--paper-rgb), 0.06); }
+
+/* ═══════════════════════════════════════════════════
+   IMAGE SYSTEM · 图片系统
+   ═══════════════════════════════════════════════════ */
+.frame-img {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+}
+.frame-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center; /* 只裁底部 */
+}
+.frame-img.fit-contain img { object-fit: contain; }
+
+/* 高度类 */
+.h-16 { height: 16vh; } .h-18 { height: 18vh; } .h-22 { height: 22vh; }
+.h-26 { height: 26vh; } .h-28 { height: 28vh; } .h-35 { height: 35vh; }
+
+/* 比例类 (单张主图用) */
+.r-21x9 { aspect-ratio: 21/9; } .r-16x9 { aspect-ratio: 16/9; }
+.r-16x10 { aspect-ratio: 16/10; } .r-4x3 { aspect-ratio: 4/3; }
+.r-3x2 { aspect-ratio: 3/2; } .r-1x1 { aspect-ratio: 1/1; }
+
+/* 图片占位符 */
+.img-slot {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: var(--sp-3);
+  border: 2px dashed var(--divider);
+  color: var(--ink-muted);
+  aspect-ratio: 16/9;
+}
+.img-slot .plus { font-size: 2rem; opacity: 0.3; }
+.img-slot .label { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); opacity: 0.4; }
+
+/* Figure + Caption */
+figure.tile { display: flex; flex-direction: column; gap: var(--sp-3); }
+.frame-cap {
+  display: flex; justify-content: space-between; align-items: baseline;
+  font-family: var(--mono); font-size: clamp(0.45rem, 0.7vw, 0.6rem);
+  text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.5;
+}
+.frame-cap .pf { flex: 1; }
+.frame-cap .nb { font-weight: 500; }
+.frame-cap .idx { margin-right: 0.8em; opacity: 0.5; }
+
+/* ═══════════════════════════════════════════════════
+   CODE SLIDE · 代码页
+   ═══════════════════════════════════════════════════ */
+.code-block {
+  background: var(--ink);
+  color: var(--paper);
+  padding: clamp(1rem, 2vw, 2rem);
+  font-family: var(--mono);
+  font-size: clamp(0.65rem, 1vw, 0.9rem);
+  line-height: 1.65;
+  overflow: hidden;
+  white-space: pre;
+  tab-size: 2;
+}
+.slide[data-theme="dark"] .code-block {
+  background: rgba(var(--paper-rgb), 0.06);
+}
+.code-block .comment { opacity: 0.45; }
+.code-block .keyword { color: #8B9FD7; }
+.code-block .string { color: #A8D89A; }
+.code-block .function { color: #E8C87A; }
+
+/* ═══════════════════════════════════════════════════
+   GHOST · 巨型背景字
+   ═══════════════════════════════════════════════════ */
+.ghost {
+  position: absolute;
+  z-index: -1;        /* Must sit below all content */
+  font-family: var(--serif-en);
+  font-size: clamp(20vw, 34vw, 40vw);
+  font-weight: 800;
+  opacity: 0.03;      /* Reduced from 0.04 for less visual noise */
+  line-height: 0.85;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.slide[data-theme="dark"] .ghost { opacity: 0.035; } /* Reduced from 0.06 */
+
+/* ═══════════════════════════════════════════════════
+   ICONS · 图标尺寸
+   ═══════════════════════════════════════════════════ */
+.ico-lg { width: clamp(28px, 3.5vw, 44px); height: clamp(28px, 3.5vw, 44px); stroke-width: 1.5; }
+.ico-md { width: clamp(20px, 2.5vw, 32px); height: clamp(20px, 2.5vw, 32px); stroke-width: 1.5; }
+.ico-sm { width: clamp(14px, 1.5vw, 20px); height: clamp(14px, 1.5vw, 20px); stroke-width: 2; }
+
+/* ═══════════════════════════════════════════════════
+   SYSTEM DIAGRAM · 架构/系统图
+   ═══════════════════════════════════════════════════ */
+.sys-diagram { display: flex; flex-direction: column; gap: var(--sp-4); }
+.sys-layer {
+  display: flex; align-items: center; gap: var(--sp-5);
+  padding: var(--sp-5) var(--sp-6);
+  border: 1px solid var(--divider);
+}
+.sys-layer .sys-label {
+  font-family: var(--mono);
+  font-size: clamp(0.5rem, 0.7vw, 0.65rem);
+  text-transform: uppercase;
+  white-space: nowrap;
+  min-width: clamp(60px, 8vw, 100px);
+  opacity: 0.55;
+}
+.sys-layer .sys-items {
+  display: flex; flex-wrap: wrap; gap: var(--sp-3);
+}
+.sys-layer .sys-item {
+  padding: var(--sp-2) var(--sp-4);
+  font-family: var(--sans-zh);
+  font-size: clamp(0.6rem, 0.9vw, 0.8rem);
+  background: var(--ink-faint);
+}
+.slide[data-theme="dark"] .sys-item { background: rgba(var(--paper-rgb), 0.08); }
+
+/* --- Loop Diagram 闭环 --- */
+.loop-diagram {
+  display: flex; align-items: center; justify-content: center;
+  gap: clamp(1rem, 3vw, 3rem);
+  flex-wrap: wrap;
+}
+.loop-node {
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-3);
+}
+.loop-node .loop-icon { width: clamp(40px, 5vw, 60px); height: clamp(40px, 5vw, 60px); display: flex; align-items: center; justify-content: center; border: 1px solid var(--divider); border-radius: 50%; }
+.loop-node .loop-title { font-family: var(--serif-zh); font-size: clamp(0.8rem, 1.2vw, 1rem); font-weight: 600; }
+.loop-node .loop-desc { font-family: var(--sans-zh); font-size: clamp(0.6rem, 0.85vw, 0.75rem); opacity: 0.6; max-width: 12ch; }
+.loop-arrow { font-size: clamp(1rem, 2vw, 1.8rem); opacity: 0.3; }
+
+/* ═══════════════════════════════════════════════════
+   NAVIGATION · 翻页导航
+   ═══════════════════════════════════════════════════ */
+.nav-bar {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: clamp(32px, 4vh, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 0.5vw, 8px);
+  z-index: 100;
+  pointer-events: none;
+  padding-bottom: clamp(4px, 0.8vh, 10px);
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.15;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.nav-dot.active { opacity: 0.6; transform: scale(1.5); }
+
+/* 进度条 */
+.progress-bar {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: var(--accent);
+  z-index: 200;
+  transition: width 0.3s var(--ease-out-expo);
+}
+
+/* ═══════════════════════════════════════════════════
+   ESC 索引视图
+   ═══════════════════════════════════════════════════ */
+.index-overlay {
+  position: fixed; inset: 0;
+  background: rgba(var(--ink-rgb), 0.92);
+  backdrop-filter: blur(20px);
+  z-index: 500;
+  display: none;
+  padding: clamp(2rem, 4vw, 4rem);
+  overflow-y: auto;
+}
+.index-overlay.active { display: block; }
+.index-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: clamp(0.8rem, 1.5vw, 1.5rem);
+}
+.index-thumb {
+  aspect-ratio: 16/9;
+  border: 1px solid rgba(255,255,255,0.1);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.index-thumb:hover { border-color: rgba(255,255,255,0.4); }
+.index-thumb.current { border-color: var(--accent); border-width: 2px; }
+.index-thumb canvas { width: 100%; height: 100%; }
+.index-num {
+  position: absolute; bottom: 4px; right: 6px;
+  font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.5);
+}
+
+/* ═══════════════════════════════════════════════════
+   SPEAKER VIEW (S 键)
+   ═══════════════════════════════════════════════════ */
+.speaker-hint {
+  position: fixed; bottom: 8px; right: 12px;
+  font-family: var(--mono); font-size: 10px;
+  opacity: 0.15; z-index: 90;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════════
+   ANIMATION · 动效
+   ═══════════════════════════════════════════════════ */
+[data-anim] {
+  opacity: 0;
+  transform: translateY(20px);
+}
+[data-anim="left"] { transform: translateX(-30px); }
+[data-anim="right"] { transform: translateX(30px); }
+[data-anim="scale"] { transform: scale(0.92); }
+[data-anim="line"] { transform: translateY(10px); }
+
+/* 低功耗模式: 立即显示 */
+body.low-power [data-anim] {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.15s !important;
+  }
+  [data-anim] { opacity: 1; transform: none; }
+  .deck { transition-duration: 0.2s !important; }
+}
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE · 响应式
+   ═══════════════════════════════════════════════════ */
+@media (max-height: 700px) {
+  .slide { padding: clamp(1rem, 3vw, 2.5rem); }
+}
+@media (max-height: 500px) {
+  .chrome, .foot, .nav-bar, .speaker-hint { display: none; }
+}
+@media (max-width: 600px) {
+  .grid-2-7-5, .grid-2-6-6, .grid-2-8-4, .grid-2-5-7 { grid-template-columns: 1fr; }
+  .grid-3, .grid-6 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+     WEBGL BACKGROUND · 流体背景
+     ═══════════════════════════════════════════════════ -->
+<canvas id="bg-canvas" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+
+<!-- 进度条 -->
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+
+<!-- 导航点 -->
+<nav class="nav-bar" id="navBar"></nav>
+
+<!-- ESC 索引 -->
+<div class="index-overlay" id="indexOverlay">
+  <div class="index-grid" id="indexGrid"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SLIDES · 在此填充内容
+     ═══════════════════════════════════════════════════ -->
+<div class="deck" id="deck">
+
+  <!-- SLIDES_HERE -->
+
+</div>
+
+<!-- 快捷键提示 -->
+<div class="speaker-hint">← → Space · ESC 索引 · S 演讲 · B 静态</div>
+
+<script type="module">
+/* ═══════════════════════════════════════════════════
+   SLIDE ENGINE · 翻页引擎
+   ═══════════════════════════════════════════════════ */
+class SlideEngine {
+  constructor() {
+    this.deck = document.getElementById('deck');
+    this.slides = [...document.querySelectorAll('.slide')];
+    this.current = 0;
+    this.total = this.slides.length;
+    this.isAnimating = false;
+    this.pipelineStep = -1; // pipeline recipe state
+
+    if (this.total === 0) return;
+
+    this.buildNavDots();
+    this.bindEvents();
+    this.goto(0, false);
+    this.initIcons();
+  }
+
+  /* --- Navigation --- */
+  goto(index, animate = true) {
+    if (index < 0 || index >= this.total) return;
+    if (this.isAnimating && animate) return;
+
+    this.current = index;
+    this.pipelineStep = -1;
+    this.isAnimating = animate;
+
+    const offset = -index * 100;
+    this.deck.style.transform = `translateX(${offset}vw)`;
+
+    if (animate) setTimeout(() => { this.isAnimating = false; }, 700);
+
+    this.updateUI();
+    this.playSlide(index);
+  }
+
+  next() {
+    // Pipeline recipe: step through before advancing
+    const slide = this.slides[this.current];
+    if (slide?.dataset.animate === 'pipeline') {
+      const steps = slide.querySelectorAll('[data-anim="step"]');
+      if (this.pipelineStep < steps.length - 1) {
+        this.pipelineStep++;
+        this.revealPipelineStep(slide, this.pipelineStep);
+        return;
+      }
+    }
+    this.goto(this.current + 1);
+  }
+
+  prev() { this.goto(this.current - 1); }
+
+  /* --- UI Updates --- */
+  updateUI() {
+    // Progress bar
+    const pct = ((this.current + 1) / this.total) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+
+    // Nav dots
+    document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === this.current);
+    });
+
+    // Dot color follows slide theme
+    const theme = this.slides[this.current]?.dataset.theme;
+    const bar = document.getElementById('navBar');
+    bar.style.color = theme === 'dark' ? 'var(--paper)' : 'var(--ink)';
+  }
+
+  buildNavDots() {
+    const bar = document.getElementById('navBar');
+    bar.innerHTML = '';
+    this.slides.forEach((_, i) => {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot';
+      dot.addEventListener('click', () => this.goto(i));
+      bar.appendChild(dot);
+    });
+  }
+
+  /* --- Events --- */
+  bindEvents() {
+    // Keyboard
+    document.addEventListener('keydown', e => {
+      if (document.getElementById('indexOverlay').classList.contains('active')) {
+        if (e.key === 'Escape') this.toggleIndex();
+        return;
+      }
+      switch (e.key) {
+        case 'ArrowRight': case ' ': case 'PageDown':
+          e.preventDefault(); this.next(); break;
+        case 'ArrowLeft': case 'PageUp':
+          e.preventDefault(); this.prev(); break;
+        case 'Home': e.preventDefault(); this.goto(0); break;
+        case 'End': e.preventDefault(); this.goto(this.total - 1); break;
+        case 'Escape': this.toggleIndex(); break;
+        case 's': case 'S': this.openSpeakerView(); break;
+        case 'b': case 'B': this.toggleLowPower(); break;
+      }
+    });
+
+    // Wheel
+    let wheelCooldown = false;
+    document.addEventListener('wheel', e => {
+      if (wheelCooldown) return;
+      wheelCooldown = true;
+      setTimeout(() => wheelCooldown = false, 800);
+      if (e.deltaY > 0 || e.deltaX > 0) this.next();
+      else this.prev();
+    }, { passive: true });
+
+    // Touch
+    let touchStart = 0;
+    document.addEventListener('touchstart', e => { touchStart = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', e => {
+      const diff = touchStart - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) { diff > 0 ? this.next() : this.prev(); }
+    }, { passive: true });
+  }
+
+  /* --- Animation Recipes --- */
+  async playSlide(index) {
+    if (document.body.classList.contains('low-power')) {
+      this.slides[index].querySelectorAll('[data-anim]').forEach(el => {
+        el.style.opacity = '1'; el.style.transform = 'none';
+      });
+      return;
+    }
+
+    const slide = this.slides[index];
+    const recipe = slide.classList.contains('hero') ? 'hero' : (slide.dataset.animate || 'cascade');
+    const els = [...slide.querySelectorAll('[data-anim]')];
+
+    // Reset
+    els.forEach(el => { el.style.opacity = '0'; el.style.transform = ''; });
+
+    // Wait for slide transition
+    await this.delay(recipe === 'hero' ? 500 : 350);
+
+    if (!this.motion) {
+      // Fallback: just show everything
+      els.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+      return;
+    }
+
+    const { animate } = this.motion;
+
+    switch (recipe) {
+      case 'cascade':
+        for (let i = 0; i < els.length; i++) {
+          await this.delay(75);
+          animate(els[i], { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
+        }
+        break;
+
+      case 'hero':
+        for (let i = 0; i < els.length; i++) {
+          await this.delay(160);
+          animate(els[i], { opacity: [0, 1], y: [30, 0] }, { duration: 0.8, easing: [0.16, 1, 0.3, 1] });
+        }
+        break;
+
+      case 'quote': {
+        const lines = els.filter(e => e.dataset.anim === 'line');
+        const others = els.filter(e => e.dataset.anim !== 'line');
+        for (const el of others) {
+          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
+          await this.delay(75);
+        }
+        await this.delay(300);
+        for (const line of lines) {
+          animate(line, { opacity: [0, 1], y: [10, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
+          await this.delay(550);
+        }
+        break;
+      }
+
+      case 'directional': {
+        const left = els.filter(e => e.dataset.anim === 'left');
+        const right = els.filter(e => e.dataset.anim === 'right');
+        const rest = els.filter(e => !['left','right'].includes(e.dataset.anim));
+        for (const el of rest) {
+          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
+          await this.delay(75);
+        }
+        await this.delay(200);
+        for (const el of left) animate(el, { opacity: [0, 1], x: [-30, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
+        await this.delay(300);
+        for (const el of right) animate(el, { opacity: [0, 1], x: [30, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
+        break;
+      }
+
+      case 'pipeline': {
+        const steps = els.filter(e => e.dataset.anim === 'step');
+        const rest = els.filter(e => e.dataset.anim !== 'step');
+        for (const el of rest) {
+          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
+          await this.delay(75);
+        }
+        // Steps start dim
+        steps.forEach(s => { s.style.opacity = '0.15'; s.style.transform = 'none'; });
+        this.pipelineStep = -1;
+        break;
+      }
+    }
+  }
+
+  revealPipelineStep(slide, stepIndex) {
+    const steps = [...slide.querySelectorAll('[data-anim="step"]')];
+    if (this.motion) {
+      const { animate } = this.motion;
+      animate(steps[stepIndex], { opacity: [0.15, 1] }, { duration: 0.4, easing: [0.16, 1, 0.3, 1] });
+    } else {
+      steps[stepIndex].style.opacity = '1';
+    }
+  }
+
+  /* --- ESC Index --- */
+  toggleIndex() {
+    const overlay = document.getElementById('indexOverlay');
+    if (overlay.classList.contains('active')) {
+      overlay.classList.remove('active');
+      return;
+    }
+    // Build thumbnails
+    const grid = document.getElementById('indexGrid');
+    grid.innerHTML = '';
+    this.slides.forEach((slide, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'index-thumb' + (i === this.current ? ' current' : '');
+      thumb.innerHTML = `<div style="width:100%;height:100%;transform:scale(0.18);transform-origin:top left;pointer-events:none;position:absolute;left:0;top:0;width:555%;height:555%;overflow:hidden">${slide.outerHTML}</div><span class="index-num">${String(i + 1).padStart(2, '0')}</span>`;
+      thumb.addEventListener('click', () => { this.goto(i); overlay.classList.remove('active'); });
+      grid.appendChild(thumb);
+    });
+    overlay.classList.add('active');
+  }
+
+  /* --- Speaker View --- */
+  openSpeakerView() {
+    const w = window.open('', 'speaker', 'width=900,height=600');
+    if (!w) return;
+
+    const currentSlide = this.slides[this.current];
+    const nextSlide = this.slides[this.current + 1];
+
+    // Extract speaker notes from HTML comments
+    const noteMatch = currentSlide.innerHTML.match(/<!--\s*speaker:\s*([\s\S]*?)\s*-->/);
+    const notes = noteMatch ? noteMatch[1].trim() : '(无演讲者笔记)';
+
+    w.document.write(`<!DOCTYPE html><html><head><title>Speaker View</title>
+    <style>
+      body{margin:0;background:#1a1a1a;color:#eee;font-family:system-ui;display:grid;grid-template:auto 1fr/1fr 1fr;height:100vh;gap:12px;padding:12px;}
+      .header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#111;border-radius:8px;}
+      .timer{font-size:2rem;font-variant-numeric:tabular-nums;font-family:monospace;}
+      .clock{font-size:1rem;opacity:0.5;}
+      .preview{background:#000;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center;position:relative;}
+      .preview-label{position:absolute;top:8px;left:12px;font-size:11px;opacity:0.4;text-transform:uppercase;letter-spacing:1px;}
+      .notes{padding:20px;background:#222;border-radius:8px;overflow-y:auto;font-size:1.1rem;line-height:1.7;white-space:pre-wrap;}
+    </style></head><body>
+    <div class="header">
+      <div>Slide <strong>${this.current + 1}</strong> / ${this.total}</div>
+      <div class="timer" id="timer">00:00</div>
+      <div class="clock" id="clock"></div>
+    </div>
+    <div class="preview"><span class="preview-label">Current</span><div style="font-size:3rem;opacity:0.3">Slide ${this.current + 1}</div></div>
+    <div class="preview"><span class="preview-label">Next</span><div style="font-size:2rem;opacity:0.2">${nextSlide ? 'Slide ' + (this.current + 2) : 'End'}</div></div>
+    <div class="notes">${notes}</div>
+    <script>
+      const start = Date.now();
+      setInterval(()=>{
+        const s = Math.floor((Date.now()-start)/1000);
+        document.getElementById('timer').textContent = String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+        document.getElementById('clock').textContent = new Date().toLocaleTimeString();
+      }, 1000);
+    <\/script></body></html>`);
+  }
+
+  /* --- Low Power Mode --- */
+  toggleLowPower() {
+    document.body.classList.toggle('low-power');
+    const isLow = document.body.classList.contains('low-power');
+
+    // Stop WebGL
+    if (this.bgRaf) { cancelAnimationFrame(this.bgRaf); this.bgRaf = null; }
+    if (!isLow) this.startWebGL();
+
+    // Force-show all current slide elements
+    if (isLow) {
+      this.slides[this.current].querySelectorAll('[data-anim]').forEach(el => {
+        el.style.opacity = '1'; el.style.transform = 'none';
+      });
+    }
+  }
+
+  /* --- Utilities --- */
+  delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  initIcons() {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  /* --- Motion One Loader --- */
+  async loadMotion() {
+    try {
+      this.motion = await import('./motion.min.js');
+    } catch {
+      try {
+        this.motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+      } catch {
+        this.motion = null;
+        document.querySelectorAll('[data-anim]').forEach(el => {
+          el.style.opacity = '1'; el.style.transform = 'none';
+        });
+      }
+    }
+  }
+
+  /* --- WebGL Background --- */
+  startWebGL() {
+    const canvas = document.getElementById('bg-canvas');
+    const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+    if (!gl) return;
+
+    canvas.width = canvas.clientWidth * (window.devicePixelRatio > 1 ? 1.5 : 1);
+    canvas.height = canvas.clientHeight * (window.devicePixelRatio > 1 ? 1.5 : 1);
+
+    // Minimal fluid-like shader
+    const vs = `attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}`;
+    const fs = `
+      precision mediump float;
+      uniform float t;
+      uniform vec2 r;
+      void main(){
+        vec2 uv=(gl_FragCoord.xy/r)*2.-1.;
+        uv.x*=r.x/r.y;
+        float d=length(uv);
+        float c=sin(d*4.-t*0.6)*0.5+0.5;
+        c*=smoothstep(2.5,0.5,d);
+        float c2=sin(uv.x*3.+uv.y*2.+t*0.4)*0.5+0.5;
+        c=mix(c,c2,0.3)*0.12;
+        gl_FragColor=vec4(vec3(c*0.8,c*0.85,c),c*0.5);
+      }`;
+
+    const compile = (src, type) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src); gl.compileShader(s); return s;
+    };
+    const prg = gl.createProgram();
+    gl.attachShader(prg, compile(vs, gl.VERTEX_SHADER));
+    gl.attachShader(prg, compile(fs, gl.FRAGMENT_SHADER));
+    gl.linkProgram(prg); gl.useProgram(prg);
+
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+    const p = gl.getAttribLocation(prg, 'p');
+    gl.enableVertexAttribArray(p);
+    gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
+
+    const tLoc = gl.getUniformLocation(prg, 't');
+    const rLoc = gl.getUniformLocation(prg, 'r');
+
+    const render = (time) => {
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform1f(tLoc, time * 0.001);
+      gl.uniform2f(rLoc, canvas.width, canvas.height);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      this.bgRaf = requestAnimationFrame(render);
+    };
+    this.bgRaf = requestAnimationFrame(render);
+  }
+}
+
+/* --- Boot --- */
+const engine = new SlideEngine();
+await engine.loadMotion();
+engine.startWebGL();
+// Re-play first slide after motion loads
+engine.playSlide(0);
+</script>
+</body>
+</html>

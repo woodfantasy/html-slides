@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>SpaceX 深度研究报告 · 资本跃迁、技术底座与地缘政治航天新范式</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700;900&family=Noto+Sans+SC:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,800;0,900;1,400;1,700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+<style>
+/* ═══════════════════════════════════════════════════
+   THEME TOKENS · 墨刊 · 深空蓝墨
+   ═══════════════════════════════════════════════════ */
+:root {
+  --ink: #08090D; --ink-rgb: 8, 9, 13;
+  --paper: #F0EDE6; --paper-rgb: 240, 237, 230;
+  --accent: #1B3A5C; --accent-rgb: 27, 58, 92;
+  --highlight: rgba(var(--accent-rgb), 0.12);
+  --paper-tint: #E6E2DA;
+  --ink-muted: rgba(var(--ink-rgb), 0.55);
+  --ink-faint: rgba(var(--ink-rgb), 0.08);
+  --chrome-bg: rgba(var(--ink-rgb), 0.04);
+  --divider: rgba(var(--ink-rgb), 0.12);
+
+  --serif-zh: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --serif-en: "Playfair Display", "Georgia", serif;
+  --sans-zh: "Noto Sans SC", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+  --sans-en: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Consolas", monospace;
+
+  --sp-2: 4px; --sp-3: 8px; --sp-4: 12px; --sp-5: 16px;
+  --sp-6: 24px; --sp-7: 32px; --sp-8: 40px; --sp-9: 48px;
+  --sp-10: 64px; --sp-11: 80px;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: var(--sans-zh), var(--sans-en);
+  font-weight: 400; font-size: clamp(0.75rem, 1.3vw, 1.1rem);
+  line-height: 1.65; color: var(--ink); background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.deck { display: flex; width: max-content; height: 100vh; height: 100dvh; transition: transform 0.65s var(--ease-out-expo); will-change: transform; }
+.slide { width: 100vw; height: 100vh; height: 100dvh; overflow: hidden; position: relative; display: flex; flex-direction: column; padding: clamp(1.5rem, 3.5vw, 4rem); flex-shrink: 0; }
+.slide[data-theme="light"] { background: var(--paper); color: var(--ink); }
+.slide[data-theme="dark"] { background: var(--ink); color: var(--paper); --divider: rgba(var(--paper-rgb), 0.12); --ink-muted: rgba(var(--paper-rgb), 0.55); --ink-faint: rgba(var(--paper-rgb), 0.08); }
+.slide.hero { z-index: 1; }
+.slide.hero::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.slide.hero[data-theme="light"]::before { background: rgba(var(--paper-rgb), 0.86); }
+.slide.hero[data-theme="dark"]::before { background: rgba(var(--ink-rgb), 0.84); }
+.slide.hero > * { position: relative; z-index: 1; }
+.nav-safe-bottom { max-height: 93vh; }
+
+/* Typography */
+.h-hero { font-family: var(--serif-zh), var(--serif-en); font-size: min(5.2vw, 9.2vh); font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; }
+.h-hero-en { font-family: var(--serif-en); font-size: clamp(3rem, 8vw, 7rem); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; }
+.h-xl { font-family: var(--serif-zh), var(--serif-en); font-size: min(4.6vw, 8.2vh); font-weight: 700; line-height: 1.2; }
+.h-md { font-family: var(--serif-zh), var(--serif-en); font-size: min(3.2vw, 5.6vh); font-weight: 600; line-height: 1.3; }
+.h-sub { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(1rem, 1.9vw, 1.6rem); font-weight: 500; line-height: 1.4; }
+.lead { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(0.9rem, 1.9vw, 1.5rem); font-weight: 400; line-height: 1.7; }
+.body-zh { font-family: var(--sans-zh), var(--sans-en); font-size: clamp(0.75rem, 1.22vw, 1.05rem); font-weight: 400; line-height: 1.7; }
+.kicker { font-family: var(--mono); font-size: clamp(0.55rem, 0.85vw, 0.8rem); font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.65; }
+.meta { font-family: var(--mono); font-size: clamp(0.5rem, 0.88vw, 0.78rem); text-transform: uppercase; letter-spacing: 0.1em; }
+.num-mega { font-family: var(--serif-en); font-size: min(10vw, 18vh); font-weight: 800; line-height: 0.9; letter-spacing: -0.04em; }
+.num-big { font-family: var(--serif-en); font-size: min(5.5vw, 10vh); font-weight: 700; line-height: 1; }
+.num-unit { font-size: 0.4em; opacity: 0.5; font-style: normal; margin-left: 0.1em; }
+em.en { font-family: var(--serif-en); font-style: italic; }
+.hi { background: linear-gradient(to top, rgba(var(--accent-rgb),0.25) 0%, rgba(var(--accent-rgb),0.25) 35%, transparent 35%); }
+.slide[data-theme="dark"] .hi { background: linear-gradient(to top, rgba(var(--accent-rgb),0.4) 0%, rgba(var(--accent-rgb),0.4) 35%, transparent 35%); }
+
+/* Chrome & Foot */
+.chrome { display: flex; justify-content: space-between; align-items: center; padding-bottom: var(--sp-5); font-family: var(--mono); font-size: clamp(0.5rem, 0.75vw, 0.7rem); text-transform: uppercase; letter-spacing: 0.1em; opacity: 0.45; flex-shrink: 0; }
+.foot { display: flex; justify-content: space-between; align-items: center; padding-top: var(--sp-4); margin-top: auto; font-family: var(--mono); font-size: clamp(0.45rem, 0.65vw, 0.6rem); text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.35; flex-shrink: 0; }
+
+/* Grid */
+.slide-body { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: visible; min-height: 0; }
+.grid-2-7-5 { display: grid; grid-template-columns: 7fr 5fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-2-6-6 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-2-5-7 { display: grid; grid-template-columns: 5fr 7fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: clamp(0.8rem, 2vw, 2rem); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(0.8rem, 2vw, 2rem); }
+
+/* Components */
+.callout { border-left: 3px solid rgba(var(--accent-rgb),0.5); padding-left: clamp(1rem, 2.5vw, 2.5rem); }
+.callout .q-big { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(1.2rem, 2.8vw, 2.4rem); font-weight: 500; line-height: 1.5; }
+.callout .cite { display: block; margin-top: var(--sp-5); font-family: var(--mono); font-size: clamp(0.55rem, 0.9vw, 0.8rem); opacity: 0.5; }
+.stat-card { display: flex; flex-direction: column; gap: var(--sp-3); }
+.stat-label { font-family: var(--mono); font-size: clamp(0.5rem, 0.8vw, 0.75rem); text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.55; }
+.stat-num { font-family: var(--serif-en); font-size: clamp(2rem, 5vw, 4rem); font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+.stat-note { font-family: var(--sans-zh); font-size: clamp(0.6rem, 1vw, 0.85rem); opacity: 0.6; line-height: 1.4; }
+.h-bar-chart { display: flex; flex-direction: column; gap: var(--sp-4); }
+.bar-row { display: grid; grid-template-columns: clamp(80px, 12vw, 160px) 1fr clamp(40px, 5vw, 60px); gap: var(--sp-4); align-items: center; }
+.bar-row .bar-name { font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.9rem); text-align: right; }
+.bar-row .bar-track { height: clamp(16px, 2.5vh, 28px); background: var(--ink-faint); border-radius: 2px; overflow: hidden; }
+.bar-row .bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.6s var(--ease-out-expo); }
+.bar-row .bar-val { font-family: var(--mono); font-size: clamp(0.55rem, 0.85vw, 0.75rem); opacity: 0.7; }
+.bar-tower-row { display: flex; gap: clamp(0.5rem, 1.5vw, 1.5rem); align-items: flex-end; height: 55vh; }
+.bar-tower { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: var(--sp-3); }
+.bar-tower .bar-fill { width: 100%; background: var(--accent); border-radius: 2px 2px 0 0; transition: height 0.8s var(--ease-out-expo); }
+.bar-tower .bar-label { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); text-transform: uppercase; opacity: 0.6; }
+.bar-tower .bar-value { font-family: var(--serif-en); font-size: clamp(1rem, 2vw, 1.5rem); font-weight: 700; }
+.timeline-v { display: flex; flex-direction: column; position: relative; padding-left: clamp(1.5rem, 3vw, 3rem); }
+.timeline-v::before { content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1px; background: var(--divider); }
+.tl-node { position: relative; padding: var(--sp-3) 0; }
+.tl-node::before { content: ""; position: absolute; left: calc(-1 * clamp(1.5rem, 3vw, 3rem) + 2px); top: calc(var(--sp-3) + 6px); width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.tl-node .tl-date { font-family: var(--mono); font-size: clamp(0.5rem, 0.75vw, 0.7rem); text-transform: uppercase; opacity: 0.5; margin-bottom: var(--sp-2); }
+.tl-node .tl-title { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(0.85rem, 1.3vw, 1.1rem); font-weight: 600; margin-bottom: 2px; }
+.tl-node .tl-desc { font-family: var(--sans-zh); font-size: clamp(0.6rem, 0.9vw, 0.78rem); opacity: 0.65; }
+.timeline-h { display: flex; align-items: flex-start; gap: 0; position: relative; }
+.timeline-h::before { content: ""; position: absolute; top: 6px; left: 0; right: 0; height: 1px; background: var(--divider); }
+.tl-h-node { flex: 1; position: relative; padding-top: clamp(1.5rem, 3vh, 2.5rem); }
+.tl-h-node::before { content: ""; position: absolute; top: 2px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+.rowline { display: grid; grid-template-columns: clamp(100px, 15vw, 200px) 1fr auto; gap: var(--sp-5); padding: var(--sp-4) 0; border-bottom: 1px solid var(--divider); align-items: baseline; }
+.rowline:first-child { border-top: 1px solid var(--divider); }
+.rowline .k { font-family: var(--serif-zh), var(--serif-en); font-weight: 600; font-size: clamp(0.8rem, 1.2vw, 1rem); }
+.rowline .v { font-family: var(--sans-zh); font-size: clamp(0.7rem, 1vw, 0.9rem); opacity: 0.75; }
+.rowline .m { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); text-transform: uppercase; opacity: 0.45; text-align: right; }
+.pillar { display: flex; flex-direction: column; gap: var(--sp-4); }
+.pillar .t { font-family: var(--serif-zh), var(--serif-en); font-size: clamp(1rem, 1.8vw, 1.4rem); font-weight: 600; line-height: 1.3; }
+.pillar .d { font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.85rem); opacity: 0.65; line-height: 1.6; }
+.tag { display: inline-block; padding: var(--sp-3) var(--sp-5); border: 1px solid var(--divider); font-family: var(--sans-zh); font-size: clamp(0.65rem, 1vw, 0.85rem); }
+.feature-card { padding: clamp(1rem, 2vw, 2rem); background: var(--ink-faint); display: flex; flex-direction: column; gap: var(--sp-4); }
+.slide[data-theme="dark"] .feature-card { background: rgba(var(--paper-rgb), 0.06); }
+.sys-diagram { display: flex; flex-direction: column; gap: var(--sp-4); }
+.sys-layer { display: flex; align-items: center; gap: var(--sp-5); padding: var(--sp-5) var(--sp-6); border: 1px solid var(--divider); }
+.sys-layer .sys-label { font-family: var(--mono); font-size: clamp(0.5rem, 0.7vw, 0.65rem); text-transform: uppercase; white-space: nowrap; min-width: clamp(60px, 8vw, 100px); opacity: 0.55; }
+.sys-layer .sys-items { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+.sys-layer .sys-item { padding: var(--sp-2) var(--sp-4); font-family: var(--sans-zh); font-size: clamp(0.6rem, 0.9vw, 0.8rem); background: var(--ink-faint); }
+.slide[data-theme="dark"] .sys-item { background: rgba(var(--paper-rgb), 0.08); }
+.matrix-fill { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); gap: 1px; background: var(--divider); }
+.matrix-cell { background: var(--paper); padding: clamp(0.6rem, 1.5vw, 1.2rem); }
+.slide[data-theme="dark"] .matrix-cell { background: var(--ink); }
+
+/* Ghost */
+.ghost { position: absolute; z-index: -1; font-family: var(--serif-en); font-size: clamp(20vw, 34vw, 40vw); font-weight: 800; opacity: 0.03; line-height: 0.85; pointer-events: none; user-select: none; white-space: nowrap; }
+.slide[data-theme="dark"] .ghost { opacity: 0.035; }
+
+/* Icons */
+.ico-lg { width: clamp(28px, 3.5vw, 44px); height: clamp(28px, 3.5vw, 44px); stroke-width: 1.5; }
+.ico-md { width: clamp(20px, 2.5vw, 32px); height: clamp(20px, 2.5vw, 32px); stroke-width: 1.5; }
+
+/* Nav */
+.nav-bar { position: fixed; bottom: 0; left: 0; right: 0; height: clamp(32px, 4vh, 48px); display: flex; align-items: center; justify-content: center; gap: clamp(4px, 0.5vw, 8px); z-index: 100; pointer-events: none; padding-bottom: clamp(4px, 0.8vh, 10px); }
+.nav-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.15; transition: opacity 0.3s, transform 0.3s; pointer-events: auto; cursor: pointer; }
+.nav-dot.active { opacity: 0.6; transform: scale(1.5); }
+.progress-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--accent); z-index: 200; transition: width 0.3s var(--ease-out-expo); }
+.index-overlay { position: fixed; inset: 0; background: rgba(var(--ink-rgb), 0.92); backdrop-filter: blur(20px); z-index: 500; display: none; padding: clamp(2rem, 4vw, 4rem); overflow-y: auto; }
+.index-overlay.active { display: block; }
+.index-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: clamp(0.8rem, 1.5vw, 1.5rem); }
+.index-thumb { aspect-ratio: 16/9; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; cursor: pointer; position: relative; transition: border-color 0.2s; }
+.index-thumb:hover { border-color: rgba(255,255,255,0.4); }
+.index-thumb.current { border-color: var(--accent); border-width: 2px; }
+.index-num { position: absolute; bottom: 4px; right: 6px; font-family: var(--mono); font-size: 10px; color: rgba(255,255,255,0.5); }
+.speaker-hint { position: fixed; bottom: 8px; right: 12px; font-family: var(--mono); font-size: 10px; opacity: 0.15; z-index: 90; pointer-events: none; }
+
+/* Animation */
+[data-anim] { opacity: 0; transform: translateY(20px); }
+[data-anim="left"] { transform: translateX(-30px); }
+[data-anim="right"] { transform: translateX(30px); }
+[data-anim="line"] { transform: translateY(10px); }
+body.low-power [data-anim] { opacity: 1 !important; transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.15s !important; }
+  [data-anim] { opacity: 1; transform: none; }
+  .deck { transition-duration: 0.2s !important; }
+}
+@media (max-width: 600px) {
+  .grid-2-7-5, .grid-2-6-6, .grid-2-5-7 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas" style="position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<div class="progress-bar" id="progressBar" style="width:0%"></div>
+<nav class="nav-bar" id="navBar"></nav>
+<div class="index-overlay" id="indexOverlay"><div class="index-grid" id="indexGrid"></div></div>
+
+<div class="deck" id="deck">
+
+  <!-- ═══════ SLIDE 01 · U01 Cover ═══════ -->
+  <section class="slide hero" data-layout="U01" data-theme="dark">
+    <!-- speaker: 各位好，今天我将为大家呈现 SpaceX 公司的深度研究报告，涵盖资本、技术、地缘政治三个维度的全面解构。 -->
+    <div class="ghost" style="top:-5vh;right:-8vw">S</div>
+    <div class="chrome" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>Deep Research · 2026.06</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-6)">
+      <span class="kicker" data-anim>Deep Research Report · June 2026</span>
+      <h1 class="h-hero" data-anim>SpaceX 深度研究</h1>
+      <p class="lead" data-anim style="max-width:55ch">
+        资本跃迁、技术底座与<span class="hi">地缘政治航天新范式</span>
+      </p>
+    </div>
+    <div class="foot" data-anim>
+      <span>Confidential</span>
+      <span>01 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 02 · D08 KPI Hero ═══════ -->
+  <section class="slide hero" data-layout="D08" data-theme="light">
+    <!-- speaker: SpaceX 于 2026 年 6 月 12 日成功 IPO，首日市值冲至 2.1 万亿美元，创下人类资本市场最大 IPO 纪录。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>IPO Highlight</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+      <span class="kicker" data-anim>IPO Day · June 12, 2026</span>
+      <div data-anim>
+        <span class="num-mega">$750<i class="num-unit" style="font-size:0.3em">亿</i></span>
+      </div>
+      <p class="lead" data-anim style="max-width:50ch;opacity:0.65">
+        史上最大 IPO 募资额，沙特阿美纪录的三倍。首日收盘市值 2.1 万亿美元，全美第六。
+      </p>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>02 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 03 · D01 Stat Grid ═══════ -->
+  <section class="slide" data-layout="D01" data-theme="dark">
+    <!-- speaker: 让我们用四个核心数据来理解 SpaceX IPO 的量级。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Capital Metrics</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>资本破局核心数据</h2>
+      <div class="grid-4">
+        <div class="stat-card" data-anim>
+          <span class="stat-label">发行价</span>
+          <span class="stat-num">$135</span>
+          <span class="stat-note">固定定价，未采用传统区间</span>
+        </div>
+        <div class="stat-card" data-anim>
+          <span class="stat-label">首日涨幅</span>
+          <span class="stat-num">+19.2<i class="num-unit">%</i></span>
+          <span class="stat-note">收盘价 $160.95</span>
+        </div>
+        <div class="stat-card" data-anim>
+          <span class="stat-label">超额认购</span>
+          <span class="stat-num">3-4<i class="num-unit">x</i></span>
+          <span class="stat-note">申购意向超 2500 亿美元</span>
+        </div>
+        <div class="stat-card" data-anim>
+          <span class="stat-label">百万富翁员工</span>
+          <span class="stat-num">4,400<i class="num-unit">+</i></span>
+          <span class="stat-note">其中 400 人超 1 亿美元</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>03 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 04 · D07 Spec Sheet ═══════ -->
+  <section class="slide" data-layout="D07" data-theme="light">
+    <!-- speaker: 以下是 IPO 的关键参数规格表。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>IPO Specs</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-6)">
+      <h2 class="h-md" data-anim>IPO 关键参数</h2>
+      <div class="nav-safe-bottom" data-anim>
+        <div class="rowline"><span class="k">交易代码</span><span class="v">SPCX / 纳斯达克 + 德克萨斯分所</span><span class="m">Nasdaq</span></div>
+        <div class="rowline"><span class="k">承销团队</span><span class="v">21 家跨国投行，高盛主导左侧承销</span><span class="m">21 Banks</span></div>
+        <div class="rowline"><span class="k">佣金总额</span><span class="v">约 5 亿美元，公开上市史上最高</span><span class="m">$500M</span></div>
+        <div class="rowline"><span class="k">零售端分配</span><span class="v">占总发行量 30%，约 225 亿美元</span><span class="m">30%</span></div>
+        <div class="rowline"><span class="k">指数纳入</span><span class="v">MSCI 快速纳入，S&P 500 因严格规则暂未放行</span><span class="m">Pending</span></div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>04 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 05 · U02 Section Break ═══════ -->
+  <section class="slide hero" data-layout="U02" data-theme="dark">
+    <!-- speaker: 接下来我们进入三维生态的底层逻辑分析。 -->
+    <div class="ghost" style="bottom:-10vh;left:-5vw">II</div>
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Chapter II</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+      <span class="kicker" data-anim>Part 02</span>
+      <h2 class="h-xl" data-anim>三维生态</h2>
+      <p class="body-zh" data-anim style="max-width:40ch;opacity:0.6">
+        发射、星链与人工智能的协同与撕裂。
+      </p>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>05 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 06 · U08 Three Pillars ═══════ -->
+  <section class="slide" data-layout="U08" data-theme="light">
+    <!-- speaker: SpaceX 的三大业务板块：空间发射、星链连接和人工智能。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Business Segments</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>三大业务板块</h2>
+      <div class="grid-3">
+        <div class="pillar" data-anim>
+          <i data-lucide="rocket" class="ico-md"></i>
+          <span class="t">空间发射</span>
+          <span class="d">2025 年营收 41 亿美元。全球 82% 商业发射市场份额，170 次发射，98.24% 成功率。</span>
+        </div>
+        <div class="pillar" data-anim>
+          <i data-lucide="wifi" class="ico-md"></i>
+          <span class="t">星链连接</span>
+          <span class="d">2025 年营收 114 亿美元。唯一盈利板块，运营利润 44 亿美元，1200 万用户。</span>
+        </div>
+        <div class="pillar" data-anim>
+          <i data-lucide="brain" class="ico-md"></i>
+          <span class="t">人工智能 (xAI)</span>
+          <span class="d">2025 年亏损 63.6 亿美元。以 1.25 万亿美元全股票置换并入，每季刚性亏损 25 亿。</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>06 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 07 · D02 KPI Tower ═══════ -->
+  <section class="slide" data-layout="D02" data-theme="dark">
+    <!-- speaker: 星链的用户增长极其迅猛，但 ARPU 持续走低形成了变现效率的滑坡。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Starlink Growth</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-6)">
+      <h2 class="h-md" data-anim>星链用户增长 vs ARPU 压缩</h2>
+      <div class="bar-tower-row nav-safe-bottom" data-anim>
+        <div class="bar-tower">
+          <span class="bar-value">14万</span>
+          <div class="bar-fill" style="height:3%"></div>
+          <span class="bar-label">2021</span>
+        </div>
+        <div class="bar-tower">
+          <span class="bar-value">100万</span>
+          <div class="bar-fill" style="height:12%"></div>
+          <span class="bar-label">2022</span>
+        </div>
+        <div class="bar-tower">
+          <span class="bar-value">230万</span>
+          <div class="bar-fill" style="height:25%"></div>
+          <span class="bar-label">2023</span>
+        </div>
+        <div class="bar-tower">
+          <span class="bar-value">440万</span>
+          <div class="bar-fill" style="height:48%"></div>
+          <span class="bar-label">2024</span>
+        </div>
+        <div class="bar-tower">
+          <span class="bar-value">890万</span>
+          <div class="bar-fill" style="height:78%"></div>
+          <span class="bar-label">2025</span>
+        </div>
+        <div class="bar-tower">
+          <span class="bar-value">1200万</span>
+          <div class="bar-fill" style="height:100%"></div>
+          <span class="bar-label">2026</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>07 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 08 · U05 Split Statement ═══════ -->
+  <section class="slide" data-layout="U05" data-theme="light">
+    <!-- speaker: 星链面临着 ARPU 从 99 美元跌至 66 美元的困境，同时用户容量上限约 2000 万。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Starlink Challenge</span>
+    </div>
+    <div class="slide-body">
+      <div class="grid-2-5-7">
+        <div data-anim="left" style="display:flex;flex-direction:column;gap:var(--sp-5)">
+          <span class="kicker">Cash Cow Dilemma</span>
+          <h2 class="h-xl">变现效率滑坡</h2>
+        </div>
+        <div data-anim="right" style="display:flex;flex-direction:column;gap:var(--sp-5)">
+          <p class="body-zh">
+            ARPU 从 2023 年底的 <span class="hi">$99</span> 持续滑至 2026Q1 的 <span class="hi">$66</span>，降幅达 33%。公司于 5 月将消费级月费上调 5-10 美元应对。
+          </p>
+          <p class="body-zh" style="opacity:0.7">
+            现有星座带宽上限约 2000 万用户。若要突破至 4500 万，必须依赖星舰高频发射 V2/V3 星链卫星，形成了与星舰研发进度的<span class="hi">死锁式依赖</span>。
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>08 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 09 · U02 Section Break ═══════ -->
+  <section class="slide hero" data-layout="U02" data-theme="dark">
+    <!-- speaker: 第三章，我们来看 Starship 的核心技术迭代历程。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Chapter III</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+      <span class="kicker" data-anim>Part 03</span>
+      <h2 class="h-xl" data-anim>星舰迭代</h2>
+      <p class="body-zh" data-anim style="max-width:40ch;opacity:0.6">
+        Flight 4 至 Flight 12，从首次塔架回收到 Block 3 首飞。
+      </p>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>09 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 10 · D04 V-Timeline ═══════ -->
+  <section class="slide" data-layout="D04" data-theme="light">
+    <!-- speaker: 星舰九次关键试飞的演进时间线。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Starship Flights</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-5)">
+      <h2 class="h-md" data-anim>星舰试飞演进</h2>
+      <div class="grid-2-6-6">
+        <div class="timeline-v nav-safe-bottom" data-anim>
+          <div class="tl-node">
+            <span class="tl-date">2024.06 · F4</span>
+            <span class="tl-title">首次完整海面虚拟着陆</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2024.10 · F5</span>
+            <span class="tl-title">"筷子"首次捕获助推器</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2025.01 · F7</span>
+            <span class="tl-title">Block 2 首秀，20 吨载荷</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2025.03 · F8</span>
+            <span class="tl-title">飞船舱内火灾，高空解体</span>
+          </div>
+        </div>
+        <div class="timeline-v nav-safe-bottom" data-anim>
+          <div class="tl-node">
+            <span class="tl-date">2025.05 · F9</span>
+            <span class="tl-title">助推器复飞失败，RUD</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2025.08 · F10</span>
+            <span class="tl-title">助推器 + 飞船双爆炸</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2025.10 · F11</span>
+            <span class="tl-title">飞船首次完好再入</span>
+          </div>
+          <div class="tl-node">
+            <span class="tl-date">2026.05 · F12</span>
+            <span class="tl-title">Block 3 + Pad 2 联合首发</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>10 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 11 · D03 H-Bar Chart ═══════ -->
+  <section class="slide" data-layout="D03" data-theme="dark">
+    <!-- speaker: 运载器竞争格局对比。SpaceX 在成本上具有压倒性优势。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Launch Comparison</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>低轨运载单价对比</h2>
+      <div class="h-bar-chart" data-anim>
+        <div class="bar-row">
+          <span class="bar-name">Starship (远期)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:2%"></div></div>
+          <span class="bar-val">$10-50</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">New Glenn</span>
+          <div class="bar-track"><div class="bar-fill" style="width:6%"></div></div>
+          <span class="bar-val">$1,500</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Falcon 9</span>
+          <div class="bar-track"><div class="bar-fill" style="width:12%"></div></div>
+          <span class="bar-val">$2,900</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Neutron (预计)</span>
+          <div class="bar-track"><div class="bar-fill" style="width:15%"></div></div>
+          <span class="bar-val">$3,800</span>
+        </div>
+        <div class="bar-row">
+          <span class="bar-name">Electron</span>
+          <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+          <span class="bar-val">$25,000</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>11 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 12 · U04 Quote ═══════ -->
+  <section class="slide hero" data-layout="U04" data-theme="light">
+    <!-- speaker: 这是马斯克对火星殖民的核心主张。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;gap:var(--sp-6)">
+      <div class="callout">
+        <p class="q-big" data-anim="line">
+          2026 年底将执行首个不载人
+        </p>
+        <p class="q-big" data-anim="line">
+          星舰火星登陆任务
+        </p>
+        <span class="cite" data-anim>— Elon Musk, Starship Update 2026</span>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>12 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 13 · D05 H-Timeline ═══════ -->
+  <section class="slide" data-layout="D05" data-theme="dark">
+    <!-- speaker: Artemis 计划时间线：从 2026 绕月到 2028 载人登月。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Artemis Timeline</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>Artemis 登月路线</h2>
+      <div class="timeline-h" data-anim>
+        <div class="tl-h-node">
+          <span class="tl-date">2026.04</span>
+          <span class="tl-title">Artemis II</span>
+          <span class="tl-desc">四名宇航员完成 1972 年以来首次载人绕月</span>
+        </div>
+        <div class="tl-h-node">
+          <span class="tl-date">2027 H2</span>
+          <span class="tl-title">Artemis III</span>
+          <span class="tl-desc">LEO 载人对接，测试 SpaceX + Blue Origin 登月舱</span>
+        </div>
+        <div class="tl-h-node">
+          <span class="tl-date">2028</span>
+          <span class="tl-title">Artemis IV</span>
+          <span class="tl-desc">正式载人登月，TLI 机动由星舰执行</span>
+        </div>
+        <div class="tl-h-node">
+          <span class="tl-date">2026-27</span>
+          <span class="tl-title">火星先遣</span>
+          <span class="tl-desc">不载人星舰 + Optimus 机器人，着陆阿卡迪亚平原</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>13 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 14 · U02 Section Break ═══════ -->
+  <section class="slide hero" data-layout="U02" data-theme="light">
+    <!-- speaker: 第五章：星盾军工合同与国家安全壁垒。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Chapter V</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+      <span class="kicker" data-anim>Part 05</span>
+      <h2 class="h-xl" data-anim>星盾军工霸权</h2>
+      <p class="body-zh" data-anim style="max-width:40ch;opacity:0.6">
+        国家安全壁垒与竞争格局的实质垄断。
+      </p>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>14 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 15 · M06 System Diagram ═══════ -->
+  <section class="slide" data-layout="M06" data-theme="dark">
+    <!-- speaker: 星盾的天基防御网络架构。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Starshield Architecture</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>星盾天基防御架构</h2>
+      <div class="sys-diagram nav-safe-bottom" data-anim>
+        <div class="sys-layer">
+          <span class="sys-label">感知层</span>
+          <div class="sys-items">
+            <span class="sys-item">AMTI 雷达星座</span>
+            <span class="sys-item">红外导弹追踪</span>
+            <span class="sys-item">NRO 侦察卫星群</span>
+          </div>
+        </div>
+        <div class="sys-layer">
+          <span class="sys-label">网络层</span>
+          <div class="sys-items">
+            <span class="sys-item">SDN Backbone</span>
+            <span class="sys-item">200Gbps 光学星间链路</span>
+            <span class="sys-item">加密相控阵通信</span>
+          </div>
+        </div>
+        <div class="sys-layer">
+          <span class="sys-label">打击层</span>
+          <div class="sys-items">
+            <span class="sys-item">"金穹" 反导拦截</span>
+            <span class="sys-item">传感器→射手杀伤链</span>
+          </div>
+        </div>
+        <div class="sys-layer">
+          <span class="sys-label">合同总额</span>
+          <div class="sys-items">
+            <span class="sys-item">SDN $22.9 亿</span>
+            <span class="sys-item">AMTI $41.6 亿</span>
+            <span class="sys-item">NRO $18 亿</span>
+            <span class="sys-item">总计 $220 亿+</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>15 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 16 · U06 Compare ═══════ -->
+  <section class="slide" data-layout="U06" data-theme="light">
+    <!-- speaker: 军事发射市场的竞争格局对比。SpaceX 的对手正全面陷入发射困境。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Competition</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-6)">
+      <h2 class="h-md" data-anim>竞争格局：实质垄断</h2>
+      <div class="grid-2-6-6">
+        <div data-anim="left" style="display:flex;flex-direction:column;gap:var(--sp-5);padding-right:var(--sp-6);border-right:1px solid var(--divider)">
+          <span class="kicker">SpaceX</span>
+          <div class="stat-card">
+            <span class="stat-label">2025 全球发射占比</span>
+            <span class="stat-num">82<i class="num-unit">%</i></span>
+            <span class="stat-note">170 次发射，98.24% 成功率</span>
+          </div>
+        </div>
+        <div data-anim="right" style="display:flex;flex-direction:column;gap:var(--sp-5)">
+          <span class="kicker">Competitors</span>
+          <p class="body-zh">Blue Origin：New Glenn 3 发 2 成 1 败，第四枚 2026.05 静力点火爆炸，唯一重型工位瘫痪。</p>
+          <p class="body-zh" style="opacity:0.7">ULA Vulcan：依赖 Blue Origin 的 BE-4 发动机。Rocket Lab Neutron：尚未首飞。</p>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>16 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 17 · X03 Feature Cards ═══════ -->
+  <section class="slide hero" data-layout="X03" data-theme="dark">
+    <!-- speaker: 公司治理层面存在四个核心风险点。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Governance Risks</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-7)">
+      <h2 class="h-md" data-anim>治理黑洞</h2>
+      <div class="grid-4" data-anim>
+        <div class="feature-card">
+          <i data-lucide="lock" class="ico-md"></i>
+          <strong class="h-sub">82.4% 控股表决权</strong>
+          <p class="body-zh" style="opacity:0.65">Class B 每股 10 票，无 Sunset 退化条款。</p>
+        </div>
+        <div class="feature-card">
+          <i data-lucide="shield-off" class="ico-md"></i>
+          <strong class="h-sub">受控公司豁免</strong>
+          <p class="body-zh" style="opacity:0.65">无需多数独立董事会和独立薪酬委员会。</p>
+        </div>
+        <div class="feature-card">
+          <i data-lucide="scale" class="ico-md"></i>
+          <strong class="h-sub">德州法律壁垒</strong>
+          <p class="body-zh" style="opacity:0.65">3% 高门槛诉讼 + 强制个人仲裁 + 剥夺集体诉讼权。</p>
+        </div>
+        <div class="feature-card">
+          <i data-lucide="link" class="ico-md"></i>
+          <strong class="h-sub">生态关联交易</strong>
+          <p class="body-zh" style="opacity:0.65">xAI 1.25 万亿并表、Tesla 20 亿注资、算力售后回租。</p>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>17 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 18 · D06 Matrix ═══════ -->
+  <section class="slide" data-layout="D06" data-theme="light">
+    <!-- speaker: 环保博弈的多维冲突矩阵。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Environmental Issues</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-6)">
+      <h2 class="h-md" data-anim>环保博弈矩阵</h2>
+      <div class="matrix-fill nav-safe-bottom" data-anim>
+        <div class="matrix-cell"><span class="kicker">地面</span><br><strong>博卡奇卡土地交换</strong><br><span style="opacity:0.6;font-size:0.85em">715 英亩野生草甸换 683 英亩内部持地</span></div>
+        <div class="matrix-cell"><span class="kicker">诉讼</span><br><strong>六方联合起诉 FAA</strong><br><span style="opacity:0.6;font-size:0.85em">2026.06.10，违反 NEPA 和历史保护法</span></div>
+        <div class="matrix-cell"><span class="kicker">天光</span><br><strong>反照污染</strong><br><span style="opacity:0.6;font-size:0.85em">1.2 万光点割裂鸟类迁徙导航系统</span></div>
+        <div class="matrix-cell"><span class="kicker">碎片</span><br><strong>25 年脱轨令废止</strong><br><span style="opacity:0.6;font-size:0.85em">特朗普政府 2026.01 撤销强制法规</span></div>
+        <div class="matrix-cell"><span class="kicker">自证</span><br><strong>自律减废</strong><br><span style="opacity:0.6;font-size:0.85em">废弃舱段从 13 个/年降至 3 个/年</span></div>
+        <div class="matrix-cell"><span class="kicker">政治</span><br><strong>去监管化红利</strong><br><span style="opacity:0.6;font-size:0.85em">游说免评价，获得关键政策免除</span></div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>18 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 19 · U07 Pipeline ═══════ -->
+  <section class="slide" data-layout="U07" data-theme="dark">
+    <!-- speaker: 最后总结三个核心投资研判。 -->
+    <div class="chrome" data-anim>
+      <span>SpaceX</span>
+      <span>Investment Thesis</span>
+    </div>
+    <div class="slide-body" style="gap:var(--sp-6)">
+      <h2 class="h-md" data-anim>三大长期预判</h2>
+      <div class="grid-3" style="gap:var(--sp-6)">
+        <div class="pillar" data-anim>
+          <span class="kicker">Thesis 01</span>
+          <span class="t">完美兑现假定</span>
+          <span class="d">94 倍 trailing-sales 估值。不被容许任何重大工程阻碍，否则估值中枢必将大振幅修正。</span>
+        </div>
+        <div class="pillar" data-anim>
+          <span class="kicker">Thesis 02</span>
+          <span class="t">三维死锁风险</span>
+          <span class="d">星链为星舰和 xAI 输血。一旦星舰 Block 3+ 断裂，触发多米诺式现金流危机。</span>
+        </div>
+        <div class="pillar" data-anim>
+          <span class="kicker">Thesis 03</span>
+          <span class="t">军事主权代偿</span>
+          <span class="d">已成为美军低轨数字化主权唯一代偿者。军事绑定赦免了治理霸王条款。</span>
+        </div>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>19 / 20</span>
+    </div>
+  </section>
+
+  <!-- ═══════ SLIDE 20 · U03 Closing ═══════ -->
+  <section class="slide hero" data-layout="U03" data-theme="dark">
+    <!-- speaker: 谢谢大家。投资 SPCX 不仅是买入星际航天黑科技，更是买入一个不受常规证券法制约的超级控制权黑洞。 -->
+    <div class="ghost" style="bottom:-8vh;right:-5vw">X</div>
+    <div class="chrome" data-anim>
+      <span>SpaceX · SPCX</span>
+    </div>
+    <div class="slide-body" style="justify-content:center;align-items:center;text-align:center;gap:var(--sp-7)">
+      <h2 class="h-hero" data-anim>谢谢</h2>
+      <p class="body-zh" data-anim style="opacity:0.6;max-width:35ch">
+        SpaceX Deep Research Report · June 2026
+      </p>
+      <div data-anim style="display:flex;gap:var(--sp-5);align-items:center">
+        <span class="tag">SPCX · Nasdaq</span>
+        <span class="tag">Confidential</span>
+      </div>
+    </div>
+    <div class="foot" data-anim>
+      <span>SpaceX · SPCX</span>
+      <span>20 / 20</span>
+    </div>
+  </section>
+
+</div>
+
+<div class="speaker-hint">← → Space · ESC 索引 · S 演讲 · B 静态</div>
+
+<script type="module">
+class SlideEngine {
+  constructor() {
+    this.deck = document.getElementById('deck');
+    this.slides = [...document.querySelectorAll('.slide')];
+    this.current = 0;
+    this.total = this.slides.length;
+    this.isAnimating = false;
+    this.pipelineStep = -1;
+    if (this.total === 0) return;
+    this.buildNavDots();
+    this.bindEvents();
+    this.goto(0, false);
+    this.initIcons();
+  }
+
+  goto(index, animate = true) {
+    if (index < 0 || index >= this.total) return;
+    if (this.isAnimating && animate) return;
+    this.current = index;
+    this.pipelineStep = -1;
+    const offset = -index * 100;
+    this.deck.style.transform = `translateX(${offset}vw)`;
+    if (animate) { this.isAnimating = true; setTimeout(() => { this.isAnimating = false; }, 700); }
+    this.updateDots();
+    this.updateProgress();
+    this.animateSlide(this.slides[index]);
+  }
+
+  next() { this.goto(this.current + 1); }
+  prev() { this.goto(this.current - 1); }
+
+  buildNavDots() {
+    const nav = document.getElementById('navBar');
+    for (let i = 0; i < this.total; i++) {
+      const dot = document.createElement('div');
+      dot.className = 'nav-dot';
+      dot.addEventListener('click', () => this.goto(i));
+      nav.appendChild(dot);
+    }
+  }
+
+  updateDots() {
+    const dots = document.querySelectorAll('.nav-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === this.current));
+    const slide = this.slides[this.current];
+    const isDark = slide.dataset.theme === 'dark';
+    document.getElementById('navBar').style.color = isDark ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.9)';
+  }
+
+  updateProgress() {
+    const pct = ((this.current + 1) / this.total) * 100;
+    document.getElementById('progressBar').style.width = `${pct}%`;
+  }
+
+  animateSlide(slide) {
+    const els = slide.querySelectorAll('[data-anim]');
+    els.forEach((el, i) => {
+      el.style.transition = 'none';
+      el.style.opacity = '0';
+      const anim = el.dataset.anim;
+      if (anim === 'left') el.style.transform = 'translateX(-30px)';
+      else if (anim === 'right') el.style.transform = 'translateX(30px)';
+      else if (anim === 'line') el.style.transform = 'translateY(10px)';
+      else el.style.transform = 'translateY(20px)';
+      setTimeout(() => {
+        el.style.transition = `opacity 0.6s var(--ease-out-expo), transform 0.6s var(--ease-out-expo)`;
+        el.style.transitionDelay = `${i * 0.1}s`;
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      }, 50);
+    });
+  }
+
+  bindEvents() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') { this.toggleIndex(); return; }
+      if (document.getElementById('indexOverlay').classList.contains('active')) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); this.next(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); this.prev(); }
+      else if (e.key === 's' || e.key === 'S') this.openSpeakerView();
+      else if (e.key === 'b' || e.key === 'B') document.body.classList.toggle('low-power');
+    });
+    let touchX = 0;
+    document.addEventListener('touchstart', (e) => { touchX = e.touches[0].clientX; });
+    document.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchX;
+      if (Math.abs(dx) > 50) { dx < 0 ? this.next() : this.prev(); }
+    });
+    document.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) { e.deltaX > 20 ? this.next() : e.deltaX < -20 ? this.prev() : null; }
+      else { e.deltaY > 20 ? this.next() : e.deltaY < -20 ? this.prev() : null; }
+    }, { passive: true });
+  }
+
+  toggleIndex() {
+    const overlay = document.getElementById('indexOverlay');
+    const grid = document.getElementById('indexGrid');
+    if (overlay.classList.contains('active')) { overlay.classList.remove('active'); return; }
+    grid.innerHTML = '';
+    this.slides.forEach((slide, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = `index-thumb${i === this.current ? ' current' : ''}`;
+      thumb.innerHTML = `<div style="width:100%;height:100%;transform:scale(0.18);transform-origin:top left;pointer-events:none;position:absolute;left:0;top:0;width:555%;height:555%;overflow:hidden">${slide.outerHTML}</div><span class="index-num">${String(i + 1).padStart(2, '0')}</span>`;
+      thumb.addEventListener('click', () => { overlay.classList.remove('active'); this.goto(i); });
+      grid.appendChild(thumb);
+    });
+    overlay.classList.add('active');
+  }
+
+  openSpeakerView() {
+    const slide = this.slides[this.current];
+    const comment = slide.innerHTML.match(/<!--\s*speaker:\s*([\s\S]*?)\s*-->/);
+    const notes = comment ? comment[1].trim() : '(No speaker notes)';
+    const w = window.open('', 'speaker', 'width=700,height=500');
+    w.document.write(`<!DOCTYPE html><html><head><title>Speaker View</title><style>body{margin:0;background:#1a1a1a;color:#eee;font-family:system-ui;display:grid;grid-template:auto 1fr/1fr 1fr;height:100vh;gap:12px;padding:12px;}.header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding:8px 16px;background:#111;border-radius:8px;}.timer{font-size:2rem;font-variant-numeric:tabular-nums;font-family:monospace;}.preview{background:#000;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:3rem;opacity:0.3;}.notes{padding:20px;background:#222;border-radius:8px;overflow-y:auto;font-size:1.1rem;line-height:1.7;white-space:pre-wrap;}</style></head><body><div class="header"><div>Slide <strong>${this.current+1}</strong>/${this.total}</div><div class="timer" id="timer">00:00</div></div><div class="preview">Slide ${this.current+1}</div><div class="preview">${this.current+1<this.total?'Next: '+(this.current+2):'End'}</div><div class="notes">${notes}</div><script>const s=Date.now();setInterval(()=>{const d=Math.floor((Date.now()-s)/1000);document.getElementById('timer').textContent=String(Math.floor(d/60)).padStart(2,'0')+':'+String(d%60).padStart(2,'0');},1000);<\/script></body></html>`);
+  }
+
+  initIcons() {
+    if (typeof lucide !== 'undefined') { lucide.createIcons(); }
+    else { setTimeout(() => { if (typeof lucide !== 'undefined') lucide.createIcons(); }, 1000); }
+  }
+}
+
+// WebGL background
+function initWebGL() {
+  const canvas = document.getElementById('bg-canvas');
+  const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: false });
+  if (!gl) return;
+  const resize = () => { canvas.width = window.innerWidth * 0.5; canvas.height = window.innerHeight * 0.5; gl.viewport(0, 0, canvas.width, canvas.height); };
+  resize(); window.addEventListener('resize', resize);
+  const vs = `attribute vec2 p;void main(){gl_Position=vec4(p,0,1);}`;
+  const fs = `precision mediump float;uniform float t;uniform vec2 r;
+  void main(){vec2 u=gl_FragCoord.xy/r;float n=sin(u.x*3.+t*.3)*sin(u.y*2.+t*.2)*.5+.5;
+  vec3 c=mix(vec3(.035,.04,.055),vec3(.06,.055,.045),n);gl_FragColor=vec4(c,.12);}`;
+  const compile = (src, type) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s); return s; };
+  const prg = gl.createProgram();
+  gl.attachShader(prg, compile(vs, gl.VERTEX_SHADER));
+  gl.attachShader(prg, compile(fs, gl.FRAGMENT_SHADER));
+  gl.linkProgram(prg); gl.useProgram(prg);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const p = gl.getAttribLocation(prg, 'p'); gl.enableVertexAttribArray(p); gl.vertexAttribPointer(p, 2, gl.FLOAT, false, 0, 0);
+  const tU = gl.getUniformLocation(prg, 't'), rU = gl.getUniformLocation(prg, 'r');
+  const loop = (time) => { gl.uniform1f(tU, time * 0.001); gl.uniform2f(rU, canvas.width, canvas.height); gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+
+new SlideEngine();
+initWebGL();
+</script>
+</body>
+</html>
