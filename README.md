@@ -1,8 +1,8 @@
-# html-slides · 下一代 AI 演示工具
+# html-slides · 制作 PPT 与 HTML Presentation
 
 > 策展级配色 × 版式骨架库 × 数据可视化原语 × 中英双语深度排版
 
-**html-slides** (项目代号 Prismo) 是一个强大的 AI Agent Skill，专门用于生成精美的、可交互的**单文件 HTML 横向翻页演示文稿**。
+**html-slides** (项目代号 Prismo) 是一个强大的 AI Agent Skill，用于辅助制作精美的、可交互的**单文件 HTML 横向翻页演示文稿 (HTML Presentation)**。
 
 无论是进行商业路演 (Pitch Deck)、行业分享、产品发布，还是技术大会演讲，html-slides 都能帮助你快速生成专业且设计感极强的在线幻灯片。
 

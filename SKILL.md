@@ -3,7 +3,7 @@ name: html-slides
 description: 生成精品级 HTML 演示文稿（单文件），含 8 套策展级风格、25+ 注册版式、数据可视化原语、WebGL 背景、Speaker View。当用户需要制作演讲 / 分享 / Pitch Deck / 发布会风格的网页 PPT 时使用。
 ---
 
-# html-slides · 下一代 AI 演示工具
+# html-slides · 制作 PPT 与 HTML Presentation
 
 > **特色**: 策展级配色 × 版式骨架库 × 数据可视化原语 × 中英双语深度排版
 
