@@ -15,7 +15,10 @@
 - [ ] **柱图高度**: `.bar-tower-row` 使用 `align-items: stretch`（非 `flex-end`），且 `.bar-tower` 有 `height: 100%`，否则 `.bar-fill` 的百分比高度无法解析
 - [ ] **字体分工正确**: 大标题用 `--serif`(衬线风格) 或对应风格字体，正文用 `--sans`，元数据用 `--mono`
 - [ ] **占位符已替换**: `<title>` 标签不含 `[必填]`
-- [ ] **配色一致**: 整个 deck 使用同一套配色方案，无自定义 hex 出现
+- [ ] **品牌元数据**: 明确品牌 deck 有 `<meta name="deck-brand">`、`<meta name="brand-primary">`、`<meta name="brand-source">`
+- [ ] **品牌色一致**: 明确品牌 deck 的 `--accent` 等于 `--brand-primary`，不被通用科技蓝/高端金覆盖
+- [ ] **首屏品牌识别**: 明确品牌 deck 的封面或首个可见页能看到品牌名或 logo
+- [ ] **配色一致**: 整个 deck 使用同一套配色方案；除已验证或用户指定的品牌主色外，无自定义 hex 出现
 - [ ] **零 em dash**: `grep '—' index.html` 应返回空。用 · 或 – 或改句式
 - [ ] **文案自审通过**: 重读所有可见文字，无 AI 假诗意、假精确数字、中英混排不自然、同义反复
 
@@ -70,6 +73,12 @@ grep -P '[\x{1F000}-\x{1FFFF}]|[\x{2600}-\x{27BF}]' index.html
 
 # 检查 P0: 占位符
 grep '\[必填\]' index.html
+
+# 检查 P0: 品牌元数据 (明确品牌 deck 必须三项都有)
+grep -n 'name="deck-brand"\|name="brand-primary"\|name="brand-source"' index.html
+
+# 检查 P0: 品牌色 token
+grep -n -- '--brand-primary\|--accent' index.html
 
 # 检查 P0: em dash (应返回空)
 grep '—' index.html

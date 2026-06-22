@@ -4,14 +4,14 @@
  * 
  * Checks a generated deck against the design kernel rules:
  * - P0: Layout registration, theme annotation, emoji, image constraints, color consistency
- * - P1: Theme rhythm, layout diversity, hero cadence, content density, ghost safety
- * - P2: Font fallback, alt text, animation markers
+ * - P1: Brand alignment, theme rhythm, layout diversity, hero cadence, content density, ghost safety
+ * - P2: Brand metadata completeness, font fallback, alt text, animation markers
  *
  * Usage: node validate.mjs path/to/index.html [--fix] [--theme]
  */
 
 import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { resolve } from 'path';
 
 const REGISTERED_LAYOUTS = [
   'U01', 'U02', 'U03', 'U04', 'U05', 'U06', 'U07', 'U08',
@@ -47,6 +47,29 @@ const RECOMMENDED_ANIMATIONS = {
 // Emoji regex (most common ranges)
 const EMOJI_RE = /[\u{1F600}-\u{1F9FF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{2702}-\u{27B0}]/gu;
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function getAttr(tag, attrName) {
+  const attrRe = new RegExp(`${escapeRegExp(attrName)}\\s*=\\s*("([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i');
+  const match = tag.match(attrRe);
+  if (!match) return null;
+  return match[2] ?? match[3] ?? match[4] ?? '';
+}
+
+function normalizeHex(value) {
+  if (!value) return null;
+  const match = value.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6}|[0-9a-f]{8})$/i);
+  if (!match) return null;
+
+  const hex = match[1].toLowerCase();
+  if (hex.length === 3) {
+    return `#${hex.split('').map(ch => ch + ch).join('')}`;
+  }
+  return `#${hex}`;
+}
+
 class Validator {
   constructor(filePath) {
     this.filePath = resolve(filePath);
@@ -64,6 +87,7 @@ class Validator {
     this.checkImageConstraints();
     this.checkPlaceholders();
     this.checkColorConsistency();
+    this.checkBrandMetadata();
     this.checkThemeRhythm();
     this.checkLayoutDiversity();
     this.checkHeroCadence();
@@ -158,6 +182,7 @@ class Validator {
     const contentOnly = this.html
       .replace(/<style[\s\S]*?<\/style>/gi, '')
       .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<meta\b[^>]*>/gi, '')
       .replace(/<!--[\s\S]*?-->/g, '');
 
     const hexRe = /#[0-9A-Fa-f]{3,8}\b/g;
@@ -168,6 +193,108 @@ class Validator {
   }
 
   // --- P1 Checks ---
+
+  getMetaContent(name) {
+    const metaRe = /<meta\b[^>]*>/gi;
+    let match;
+    while ((match = metaRe.exec(this.html)) !== null) {
+      const tag = match[0];
+      if (getAttr(tag, 'name') === name) {
+        return getAttr(tag, 'content')?.trim() ?? '';
+      }
+    }
+    return null;
+  }
+
+  getCssVar(name) {
+    const re = new RegExp(`--${escapeRegExp(name)}\\s*:\\s*([^;]+);`, 'i');
+    return this.html.match(re)?.[1]?.trim() ?? null;
+  }
+
+  resolveCssValue(value, seen = new Set()) {
+    if (!value) return null;
+    const trimmed = value.trim();
+    const varMatch = trimmed.match(/^var\(\s*--([A-Za-z0-9_-]+)\s*\)$/);
+    if (!varMatch) return trimmed;
+
+    const varName = varMatch[1];
+    if (seen.has(varName)) return trimmed;
+    seen.add(varName);
+
+    return this.resolveCssValue(this.getCssVar(varName), seen);
+  }
+
+  getVisibleText() {
+    const body = this.html.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i)?.[1] ?? this.html;
+    const brandSurfaceAttrs = [];
+    const tagRe = /<[^>]+>/gi;
+    let tagMatch;
+    while ((tagMatch = tagRe.exec(body)) !== null) {
+      const tag = tagMatch[0];
+      for (const attr of ['alt', 'aria-label', 'title', 'src']) {
+        const value = getAttr(tag, attr);
+        if (value) brandSurfaceAttrs.push(value);
+      }
+    }
+
+    const visibleText = body
+      .replace(/<style[\s\S]*?<\/style>/gi, '')
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return `${visibleText} ${brandSurfaceAttrs.join(' ')}`.trim();
+  }
+
+  checkBrandMetadata() {
+    const deckBrand = this.getMetaContent('deck-brand');
+    const metaPrimary = this.getMetaContent('brand-primary');
+    const brandSource = this.getMetaContent('brand-source');
+    const cssBrandPrimary = this.getCssVar('brand-primary');
+    const hasBrandSignal = Boolean(
+      deckBrand || metaPrimary || brandSource || cssBrandPrimary || /\bdata-brand\s*=/.test(this.html)
+    );
+
+    if (!hasBrandSignal) return;
+
+    if (!deckBrand) {
+      this.errors.P2.push('Brand metadata: missing <meta name="deck-brand"> while brand tokens or brand metadata are present.');
+    }
+
+    if (!metaPrimary && !cssBrandPrimary) {
+      this.errors.P2.push('Brand metadata: missing brand-primary. Add <meta name="brand-primary"> or --brand-primary.');
+    }
+
+    if (!brandSource) {
+      this.errors.P2.push('Brand metadata: missing <meta name="brand-source">. Record user-provided, official-site, brand-guide, ir-site, screenshot, or unverified.');
+    }
+
+    const brandPrimaryRaw = cssBrandPrimary || metaPrimary;
+    const brandPrimary = normalizeHex(this.resolveCssValue(brandPrimaryRaw));
+    const accent = normalizeHex(this.resolveCssValue(this.getCssVar('accent')));
+
+    if (brandPrimaryRaw && !brandPrimary) {
+      this.errors.P2.push(`Brand metadata: brand primary "${brandPrimaryRaw}" is not a plain hex color.`);
+    }
+
+    if (brandPrimary && accent && brandPrimary !== accent) {
+      this.errors.P1.push(
+        `Brand color mismatch: --accent resolves to ${accent}, but brand primary is ${brandPrimary}. Brand decks must map --accent to --brand-primary.`
+      );
+    }
+
+    if (deckBrand) {
+      const visibleText = this.getVisibleText().toLowerCase();
+      const brandText = deckBrand.toLowerCase();
+      if (brandText.length >= 2 && !visibleText.includes(brandText)) {
+        this.errors.P1.push(
+          `Brand visibility: deck-brand "${deckBrand}" is not visible in slide body text. Cover or chrome should show the brand name or logo.`
+        );
+      }
+    }
+  }
 
   checkThemeRhythm() {
     const themes = [];

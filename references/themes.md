@@ -1,7 +1,31 @@
 # 主题色参考 · Theme Tokens
 
 > 8 套策展级风格，每套 2-3 个配色方案。  
-> 一份 deck 只用一套方案，不允许混搭或自定义 hex。
+> 一份 deck 只用一套方案，不允许混搭或随意自定义 hex。明确品牌 deck 可按 `brand-assets.md` 用已验证或用户指定的品牌主色覆盖 `--accent`。
+
+---
+
+## 品牌色覆盖协议
+
+当 deck 指向明确品牌、公司、产品、活动、IP、财报、IR 或发布会时，先读 `brand-assets.md`：
+
+1. 从下面选一套最贴近内容气质的主题，整体复制 `:root`
+2. 只覆盖品牌相关 token，不重写 `--ink`、`--paper`、`--paper-tint`
+3. `--accent` 必须跟随 `--brand-primary`
+4. 在 `<head>` 写入 `deck-brand`、`brand-primary`、`brand-source`
+
+```css
+:root {
+  /* 先保留所选主题 token */
+  --brand-primary: #RRGGBB;
+  --brand-primary-rgb: R, G, B;
+  --brand-secondary: #RRGGBB; /* 可选 */
+  --accent: var(--brand-primary);
+  --accent-rgb: var(--brand-primary-rgb);
+}
+```
+
+不要因为“科技/数据/研究”默认选蓝色。如果主题是 Bilibili 财报、品牌复盘或发布会，品牌红/粉红系主色优先于 1B 靛蓝瓷或 2A 克莱因蓝。
 
 ---
 
