@@ -20,6 +20,30 @@ const REGISTERED_LAYOUTS = [
   'X01', 'X02', 'X03',
 ];
 
+const ALLOWED_ANIMATIONS = [
+  'cascade', 'hero', 'quote', 'directional', 'pipeline',
+  'counter', 'bar-grow', 'timeline-dots', 'matrix-scan',
+  'card-spring', 'stagger-grid', 'svg-draw', 'scramble',
+];
+
+const RECOMMENDED_ANIMATIONS = {
+  U04: 'quote',
+  U05: 'directional',
+  U06: 'directional',
+  U07: 'pipeline',
+  U08: 'card-spring',
+  D01: 'counter',
+  D02: 'bar-grow',
+  D03: 'bar-grow',
+  D04: 'timeline-dots',
+  D05: 'timeline-dots',
+  D06: 'matrix-scan',
+  D08: 'counter',
+  M02: 'stagger-grid',
+  M06: 'svg-draw',
+  X03: 'card-spring',
+};
+
 // Emoji regex (most common ranges)
 const EMOJI_RE = /[\u{1F600}-\u{1F9FF}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{27BF}]|[\u{FE00}-\u{FE0F}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA00}-\u{1FA6F}]|[\u{1FA70}-\u{1FAFF}]|[\u{2702}-\u{27B0}]/gu;
 
@@ -48,6 +72,7 @@ class Validator {
     this.checkFontFallback();
     this.checkAltText();
     this.checkAnimationMarkers();
+    this.checkAnimationRecipes();
 
     this.report();
   }
@@ -322,6 +347,36 @@ class Validator {
 
     if (noAnim > 0) {
       this.errors.P2.push(`${noAnim} slide(s) have no data-anim markers (no entry animation)`);
+    }
+  }
+
+  checkAnimationRecipes() {
+    const slideRe = /<section\b[^>]*class="[^"]*slide[^"]*"[^>]*>/gi;
+    let match;
+    let slideIndex = 0;
+
+    while ((match = slideRe.exec(this.html)) !== null) {
+      slideIndex++;
+      const tag = match[0];
+      const layout = tag.match(/data-layout="([^"]*)"/)?.[1];
+      const animation = tag.match(/data-animate="([^"]*)"/)?.[1];
+
+      if (animation && !ALLOWED_ANIMATIONS.includes(animation)) {
+        this.errors.P2.push(
+          `Slide ${slideIndex}: Unknown data-animate="${animation}". Use one of: ${ALLOWED_ANIMATIONS.join(', ')}`
+        );
+      }
+
+      const recommended = layout ? RECOMMENDED_ANIMATIONS[layout] : null;
+      if (recommended && !animation) {
+        this.errors.P3.push(
+          `Slide ${slideIndex}: Layout ${layout} auto-selects "${recommended}"; consider adding data-animate="${recommended}" for clarity.`
+        );
+      } else if (recommended && animation && animation !== recommended) {
+        this.errors.P3.push(
+          `Slide ${slideIndex}: Layout ${layout} usually uses "${recommended}", currently "${animation}". Keep only if intentional.`
+        );
+      }
     }
   }
 

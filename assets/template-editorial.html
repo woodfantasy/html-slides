@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>[必填] 替换为 PPT 标题 · Deck Title</title>
+<link rel="icon" href="data:,">
 
 <!-- ═══════════════════════════════════════════════════
      FONTS
@@ -303,10 +304,9 @@ em.en {
 /* ═══════════════════════════════════════════════════
    GRID SYSTEM · 网格系统
    ═══════════════════════════════════════════════════ */
-/* .slide already has overflow:hidden as safety net — slide-body uses visible
-   to prevent silent text clipping. Content that exceeds will be caught by
-   the slide's own overflow:hidden at the outermost boundary. */
-.slide-body { flex: 1; display: flex; flex-direction: column; justify-content: center; overflow: visible; min-height: 0; }
+/* Note: safe center 内容超出时回退到 start 对齐（防止顶部裁切）
+   overflow: hidden: 防止内容溢出与 .foot 重叠（safe center 保证溢出只发生在底部） */
+.slide-body { flex: 1; display: flex; flex-direction: column; justify-content: safe center; overflow: hidden; min-height: 0; }
 
 /* 经典两栏 */
 .grid-2-7-5 { display: grid; grid-template-columns: 7fr 5fr; gap: clamp(1rem, 3vw, 3rem); align-items: start; }
@@ -370,9 +370,12 @@ em.en {
 }
 
 /* --- Bar Tower 柱状塔 --- */
-.bar-tower-row { display: flex; gap: clamp(0.5rem, 1.5vw, 1.5rem); align-items: flex-end; height: 55vh; }
+/* Note: align-items: stretch 使 .bar-tower 获得确定高度(55vh)，
+   .bar-fill 的 height 百分比才能正确解析。底部对齐由 .bar-tower 的 justify-content:flex-end 处理 */
+.bar-tower-row { display: flex; gap: clamp(0.5rem, 1.5vw, 1.5rem); align-items: stretch; height: 55vh; }
 .bar-tower {
   flex: 1;
+  height: 100%; /* 显式确定高度，使 .bar-fill 的 height 百分比基准明确 */
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -800,6 +803,8 @@ class SlideEngine {
     this.total = this.slides.length;
     this.isAnimating = false;
     this.pipelineStep = -1; // pipeline recipe state
+    this.anime = window.anime || null;
+    this.prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     if (this.total === 0) return;
 
@@ -913,99 +918,486 @@ class SlideEngine {
 
   /* --- Animation Recipes --- */
   async playSlide(index) {
-    if (document.body.classList.contains('low-power')) {
-      this.slides[index].querySelectorAll('[data-anim]').forEach(el => {
-        el.style.opacity = '1'; el.style.transform = 'none';
-      });
+    const slide = this.slides[index];
+    if (!slide) return;
+
+    if (document.body.classList.contains('low-power') || this.prefersReducedMotion) {
+      this.showSlide(slide);
       return;
     }
 
-    const slide = this.slides[index];
-    const recipe = slide.classList.contains('hero') ? 'hero' : (slide.dataset.animate || 'cascade');
-    const els = [...slide.querySelectorAll('[data-anim]')];
+    const recipe = this.resolveRecipe(slide);
+    this.resetSlide(slide);
 
-    // Reset
-    els.forEach(el => { el.style.opacity = '0'; el.style.transform = ''; });
-
-    // Wait for slide transition
     await this.delay(recipe === 'hero' ? 500 : 350);
 
-    if (!this.motion) {
-      // Fallback: just show everything
-      els.forEach(el => { el.style.opacity = '1'; el.style.transform = 'none'; });
+    if (!this.anime) {
+      this.showSlide(slide);
       return;
     }
 
-    const { animate } = this.motion;
-
     switch (recipe) {
-      case 'cascade':
-        for (let i = 0; i < els.length; i++) {
-          await this.delay(75);
-          animate(els[i], { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
-        }
-        break;
-
       case 'hero':
-        for (let i = 0; i < els.length; i++) {
-          await this.delay(160);
-          animate(els[i], { opacity: [0, 1], y: [30, 0] }, { duration: 0.8, easing: [0.16, 1, 0.3, 1] });
-        }
+        this.recipeHero(slide);
         break;
-
-      case 'quote': {
-        const lines = els.filter(e => e.dataset.anim === 'line');
-        const others = els.filter(e => e.dataset.anim !== 'line');
-        for (const el of others) {
-          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
-          await this.delay(75);
-        }
-        await this.delay(300);
-        for (const line of lines) {
-          animate(line, { opacity: [0, 1], y: [10, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
-          await this.delay(550);
-        }
+      case 'quote':
+        this.recipeQuote(slide);
         break;
-      }
-
-      case 'directional': {
-        const left = els.filter(e => e.dataset.anim === 'left');
-        const right = els.filter(e => e.dataset.anim === 'right');
-        const rest = els.filter(e => !['left','right'].includes(e.dataset.anim));
-        for (const el of rest) {
-          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
-          await this.delay(75);
-        }
-        await this.delay(200);
-        for (const el of left) animate(el, { opacity: [0, 1], x: [-30, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
-        await this.delay(300);
-        for (const el of right) animate(el, { opacity: [0, 1], x: [30, 0] }, { duration: 0.6, easing: [0.16, 1, 0.3, 1] });
+      case 'directional':
+        this.recipeDirectional(slide);
         break;
-      }
-
-      case 'pipeline': {
-        const steps = els.filter(e => e.dataset.anim === 'step');
-        const rest = els.filter(e => e.dataset.anim !== 'step');
-        for (const el of rest) {
-          animate(el, { opacity: [0, 1], y: [20, 0] }, { duration: 0.5, easing: [0.16, 1, 0.3, 1] });
-          await this.delay(75);
-        }
-        // Steps start dim
-        steps.forEach(s => { s.style.opacity = '0.15'; s.style.transform = 'none'; });
-        this.pipelineStep = -1;
+      case 'pipeline':
+        this.recipePipeline(slide);
         break;
-      }
+      case 'counter':
+        this.recipeCounter(slide);
+        break;
+      case 'bar-grow':
+        this.recipeBarGrow(slide);
+        break;
+      case 'timeline-dots':
+        this.recipeTimelineDots(slide);
+        break;
+      case 'matrix-scan':
+        this.recipeMatrixScan(slide);
+        break;
+      case 'card-spring':
+        this.recipeCardSpring(slide);
+        break;
+      case 'svg-draw':
+        this.recipeSvgDraw(slide);
+        break;
+      case 'scramble':
+        this.recipeScramble(slide);
+        break;
+      case 'stagger-grid':
+        this.recipeStaggerGrid(slide);
+        break;
+      case 'cascade':
+      default:
+        this.recipeCascade(slide);
     }
+  }
+
+  resolveRecipe(slide) {
+    if (slide.dataset.animate) return slide.dataset.animate;
+
+    const layout = slide.dataset.layout;
+    if (['D01', 'D08'].includes(layout)) return 'counter';
+    if (['D02', 'D03'].includes(layout)) return 'bar-grow';
+    if (['D04', 'D05'].includes(layout)) return 'timeline-dots';
+    if (layout === 'D06') return 'matrix-scan';
+    if (['U08', 'X03'].includes(layout)) return 'card-spring';
+    if (layout === 'M02') return 'stagger-grid';
+    if (layout === 'M06') return 'svg-draw';
+    if (slide.classList.contains('hero')) return 'hero';
+    return 'cascade';
+  }
+
+  resetSlide(slide) {
+    slide.querySelectorAll('[data-anim]').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = '';
+    });
+    slide.querySelectorAll('.bar-tower,.bar-row,.tl-node,.tl-h-node,.matrix-cell,.feature-card,.pillar,.sys-layer,.sys-item,figure.tile').forEach(el => {
+      el.style.opacity = '';
+      el.style.transform = '';
+    });
+  }
+
+  showSlide(slide) {
+    slide.querySelectorAll('[data-anim],.bar-tower,.bar-row,.tl-node,.tl-h-node,.matrix-cell,.feature-card,.pillar,.sys-layer,.sys-item,figure.tile').forEach(el => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+    this.restoreBars(slide);
+    this.restoreCounters(slide);
+  }
+
+  recipeCascade(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    this.addToTimeline(tl, slide.querySelectorAll('[data-anim]'), {
+      opacity: [0, 1],
+      y: [20, 0],
+      delay: stagger(75),
+    }, 0);
+  }
+
+  recipeHero(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const tl = createTimeline({ defaults: { duration: 650, ease: 'out(4)' } });
+    const title = slide.querySelector('.h-hero[data-anim], .h-xl[data-anim], .h-md[data-anim]');
+    const titleChars = this.prepareSplitChars(title);
+    const chrome = slide.querySelectorAll('.chrome[data-anim]');
+    const foot = slide.querySelectorAll('.foot[data-anim]');
+    const intro = [...slide.querySelectorAll('.kicker[data-anim], .lead[data-anim]')];
+    const rest = [...slide.querySelectorAll('[data-anim]')]
+      .filter(el => el !== title && !intro.includes(el) && !el.classList.contains('chrome') && !el.classList.contains('foot'));
+
+    this.addToTimeline(tl, chrome, { opacity: [0, 1], y: [-10, 0], duration: 420 }, 0);
+    this.addToTimeline(tl, intro, { opacity: [0, 1], y: [18, 0], delay: stagger(90) }, 130);
+
+    if (titleChars.length) {
+      title.style.opacity = '1';
+      title.style.transform = 'none';
+      this.addToTimeline(tl, titleChars, {
+        opacity: [0, 1],
+        y: ['0.45em', '0em'],
+        delay: stagger(28, { from: 'center' }),
+        duration: 620,
+      }, 260);
+    } else {
+      this.addToTimeline(tl, title, { opacity: [0, 1], y: [30, 0], duration: 760 }, 260);
+    }
+
+    this.addToTimeline(tl, rest, { opacity: [0, 1], y: [22, 0], delay: stagger(80) }, 560);
+    this.addToTimeline(tl, foot, { opacity: [0, 1], y: [10, 0], duration: 420 }, 860);
+  }
+
+  recipeQuote(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const els = [...slide.querySelectorAll('[data-anim]')];
+    const lines = els.filter(e => e.dataset.anim === 'line');
+    const others = els.filter(e => e.dataset.anim !== 'line');
+    const tl = createTimeline({ defaults: { ease: 'out(4)' } });
+    this.addToTimeline(tl, others, { opacity: [0, 1], y: [18, 0], duration: 520, delay: stagger(75) }, 0);
+    this.addToTimeline(tl, lines, { opacity: [0, 1], y: [16, 0], duration: 720, delay: stagger(380) }, 380);
+  }
+
+  recipeDirectional(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const els = [...slide.querySelectorAll('[data-anim]')];
+    const left = els.filter(e => e.dataset.anim === 'left');
+    const right = els.filter(e => e.dataset.anim === 'right');
+    const rest = els.filter(e => !['left', 'right'].includes(e.dataset.anim));
+    const tl = createTimeline({ defaults: { duration: 620, ease: 'out(4)' } });
+    this.addToTimeline(tl, rest, { opacity: [0, 1], y: [20, 0], delay: stagger(75) }, 0);
+    this.addToTimeline(tl, left, { opacity: [0, 1], x: [-36, 0], delay: stagger(70) }, 320);
+    this.addToTimeline(tl, right, { opacity: [0, 1], x: [36, 0], delay: stagger(70) }, 440);
+  }
+
+  recipePipeline(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const steps = [...slide.querySelectorAll('[data-anim="step"]')];
+    const rest = [...slide.querySelectorAll('[data-anim]')].filter(e => e.dataset.anim !== 'step');
+    const tl = createTimeline({ defaults: { duration: 520, ease: 'out(4)' } });
+    this.addToTimeline(tl, rest, { opacity: [0, 1], y: [20, 0], delay: stagger(75) }, 0);
+    steps.forEach(s => { s.style.opacity = '0.15'; s.style.transform = 'none'; });
+    this.pipelineStep = -1;
+  }
+
+  recipeCounter(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const cards = slide.querySelectorAll('.stat-card[data-anim], [data-anim] .stat-card, .num-mega');
+    const intro = [...slide.querySelectorAll('[data-anim]')].filter(el => !el.classList.contains('stat-card') && !el.querySelector?.('.stat-card'));
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    this.addToTimeline(tl, intro, { opacity: [0, 1], y: [20, 0], delay: stagger(75) }, 0);
+    this.addToTimeline(tl, cards, {
+      opacity: [0, 1],
+      y: [26, 0],
+      scale: [0.96, 1],
+      delay: stagger(95),
+      ease: this.springEase(0.28),
+    }, 260);
+    this.animateCounters(slide, 520);
+  }
+
+  recipeBarGrow(slide) {
+    const { createTimeline, animate, stagger } = this.anime;
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    const chromeAndTitle = [...slide.querySelectorAll('.chrome[data-anim], .h-md[data-anim], .h-xl[data-anim], .foot[data-anim]')];
+    const chartWraps = slide.querySelectorAll('.bar-tower-row[data-anim], .h-bar-chart[data-anim]');
+    const bars = [...slide.querySelectorAll('.bar-tower, .bar-row')];
+
+    bars.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(18px)'; });
+    this.cacheBars(slide);
+
+    this.addToTimeline(tl, chromeAndTitle, { opacity: [0, 1], y: [18, 0], delay: stagger(75) }, 0);
+    this.addToTimeline(tl, chartWraps, { opacity: [0, 1], y: [10, 0], duration: 420 }, 220);
+    this.addToTimeline(tl, bars, { opacity: [0, 1], y: [18, 0], delay: stagger(90) }, 360);
+
+    slide.querySelectorAll('.bar-tower .bar-fill').forEach((bar, i) => {
+      animate(bar, {
+        height: ['0%', bar.dataset.targetHeight || '100%'],
+        duration: 900,
+        delay: 640 + i * 100,
+        ease: 'out(4)',
+      });
+    });
+    slide.querySelectorAll('.bar-row .bar-fill').forEach((bar, i) => {
+      animate(bar, {
+        width: ['0%', bar.dataset.targetWidth || '100%'],
+        duration: 880,
+        delay: 580 + i * 90,
+        ease: 'out(4)',
+      });
+    });
+    this.animateCounters(slide, 640);
+  }
+
+  recipeTimelineDots(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const nodes = slide.querySelectorAll('.tl-node, .tl-h-node');
+    nodes.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(16px)'; });
+
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    this.addToTimeline(tl, slide.querySelectorAll('.chrome[data-anim], .h-md[data-anim], .h-xl[data-anim], .foot[data-anim]'), {
+      opacity: [0, 1], y: [18, 0], delay: stagger(75),
+    }, 0);
+    this.addToTimeline(tl, slide.querySelectorAll('.timeline-v[data-anim], .timeline-h[data-anim]'), {
+      opacity: [0, 1], y: [8, 0], duration: 420,
+    }, 240);
+    this.addToTimeline(tl, nodes, {
+      opacity: [0, 1],
+      y: [16, 0],
+      scale: [0.98, 1],
+      delay: stagger(150),
+    }, 360);
+  }
+
+  recipeMatrixScan(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const cells = slide.querySelectorAll('.matrix-cell');
+    cells.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(12px) scale(0.98)'; });
+
+    const tl = createTimeline({ defaults: { duration: 520, ease: 'out(4)' } });
+    this.addToTimeline(tl, slide.querySelectorAll('.chrome[data-anim], [data-anim]:not(.matrix-fill), .foot[data-anim]'), {
+      opacity: [0, 1], y: [18, 0], delay: stagger(70),
+    }, 0);
+    this.addToTimeline(tl, slide.querySelectorAll('.matrix-fill[data-anim]'), { opacity: [0, 1], y: [8, 0] }, 240);
+    this.addToTimeline(tl, cells, {
+      opacity: [0, 1],
+      y: [12, 0],
+      scale: [0.98, 1],
+      delay: stagger(55, { grid: true, from: 'first' }),
+    }, 360);
+  }
+
+  recipeCardSpring(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const cards = slide.querySelectorAll('.feature-card, .pillar');
+    const wrappers = slide.querySelectorAll('.grid-3[data-anim], .grid-4[data-anim], .grid-6[data-anim]');
+    cards.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(24px) scale(0.96)'; });
+
+    const tl = createTimeline({ defaults: { duration: 520, ease: 'out(4)' } });
+    this.addToTimeline(tl, [...slide.querySelectorAll('[data-anim]')].filter(el => !el.matches('.pillar') && !el.querySelector?.('.feature-card')), {
+      opacity: [0, 1], y: [18, 0], delay: stagger(70),
+    }, 0);
+    this.addToTimeline(tl, wrappers, { opacity: [0, 1], y: [8, 0], duration: 360 }, 220);
+    this.addToTimeline(tl, cards, {
+      opacity: [0, 1],
+      y: [24, 0],
+      scale: [0.96, 1],
+      delay: stagger(90, { from: 'center' }),
+      ease: this.springEase(0.35),
+    }, 300);
+  }
+
+  recipeStaggerGrid(slide) {
+    const { createTimeline, stagger } = this.anime;
+    const gridItems = slide.querySelectorAll('.grid-3 > *, .grid-4 > *, .grid-6 > *, figure.tile');
+    gridItems.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(20px) scale(0.97)'; });
+
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    this.addToTimeline(tl, [...slide.querySelectorAll('[data-anim]')].filter(el => !el.matches('.grid-3, .grid-4, .grid-6')), {
+      opacity: [0, 1], y: [18, 0], delay: stagger(70),
+    }, 0);
+    this.addToTimeline(tl, slide.querySelectorAll('.grid-3[data-anim], .grid-4[data-anim], .grid-6[data-anim]'), {
+      opacity: [0, 1], y: [8, 0], duration: 400,
+    }, 220);
+    this.addToTimeline(tl, gridItems, {
+      opacity: [0, 1],
+      y: [20, 0],
+      scale: [0.97, 1],
+      delay: stagger(70, { grid: true, from: 'center' }),
+    }, 320);
+  }
+
+  recipeSvgDraw(slide) {
+    const { createTimeline, animate, stagger } = this.anime;
+    const tl = createTimeline({ defaults: { duration: 560, ease: 'out(4)' } });
+    const shapes = [...slide.querySelectorAll('svg path, svg line, svg polyline, svg polygon, svg circle, svg rect')];
+    const layers = slide.querySelectorAll('.sys-layer, .sys-item');
+
+    this.addToTimeline(tl, slide.querySelectorAll('[data-anim]'), {
+      opacity: [0, 1], y: [18, 0], delay: stagger(70),
+    }, 0);
+
+    if (shapes.length) {
+      shapes.forEach(shape => {
+        if (typeof shape.getTotalLength !== 'function') return;
+        const len = shape.getTotalLength();
+        shape.style.strokeDasharray = len;
+        shape.style.strokeDashoffset = len;
+      });
+      shapes.forEach((shape, i) => {
+        animate(shape, {
+          strokeDashoffset: [Number(shape.style.strokeDashoffset) || 0, 0],
+          duration: 900,
+          delay: 360 + i * 80,
+          ease: 'out(4)',
+        });
+      });
+    } else {
+      layers.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(16px)'; });
+      this.addToTimeline(tl, layers, { opacity: [0, 1], y: [16, 0], delay: stagger(75) }, 320);
+    }
+  }
+
+  recipeScramble(slide) {
+    const { createTimeline, animate, stagger } = this.anime;
+    const scrambleText = this.anime.scrambleText || this.anime.text?.scrambleText;
+    if (!scrambleText) {
+      this.recipeCascade(slide);
+      return;
+    }
+
+    const textTargets = [...slide.querySelectorAll('.h-hero[data-anim], .h-xl[data-anim], .h-md[data-anim], .kicker[data-anim], .lead[data-anim]')];
+    const others = [...slide.querySelectorAll('[data-anim]')].filter(el => !textTargets.includes(el));
+    const tl = createTimeline({ defaults: { duration: 520, ease: 'out(4)' } });
+    this.addToTimeline(tl, others, { opacity: [0, 1], y: [16, 0], delay: stagger(70) }, 0);
+    textTargets.forEach((el, i) => {
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+      animate(el, {
+        innerHTML: scrambleText({
+          chars: '01ABCDEFGHIJKLMNOPQRSTUVWXYZ',
+          revealDelay: 120,
+        }),
+        duration: 900,
+        delay: 160 + i * 130,
+        ease: 'linear',
+      });
+    });
   }
 
   revealPipelineStep(slide, stepIndex) {
     const steps = [...slide.querySelectorAll('[data-anim="step"]')];
-    if (this.motion) {
-      const { animate } = this.motion;
-      animate(steps[stepIndex], { opacity: [0.15, 1] }, { duration: 0.4, easing: [0.16, 1, 0.3, 1] });
+    if (this.anime) {
+      const { animate } = this.anime;
+      animate(steps[stepIndex], { opacity: [0.15, 1], scale: [0.98, 1], duration: 420, ease: 'out(4)' });
     } else {
       steps[stepIndex].style.opacity = '1';
     }
+  }
+
+  addToTimeline(timeline, targets, params, position) {
+    const list = this.toArray(targets).filter(Boolean);
+    if (list.length === 0) return timeline;
+    return timeline.add(list, params, position);
+  }
+
+  toArray(targets) {
+    if (!targets) return [];
+    if (targets instanceof Element) return [targets];
+    return [...targets];
+  }
+
+  springEase(bounce = 0.32) {
+    return this.anime.spring ? this.anime.spring({ bounce }) : 'out(4)';
+  }
+
+  prepareSplitChars(el) {
+    const splitText = this.anime.splitText || this.anime.text?.splitText;
+    if (!el || !splitText) return [];
+    if (!el._animeSplitChars) {
+      try {
+        const split = splitText(el, { chars: true });
+        el._animeSplitChars = split.chars || [];
+      } catch {
+        el._animeSplitChars = [];
+      }
+    }
+    el._animeSplitChars.forEach(char => {
+      char.style.opacity = '0';
+      char.style.transform = 'translateY(0.45em)';
+    });
+    return el._animeSplitChars;
+  }
+
+  cacheBars(slide) {
+    slide.querySelectorAll('.bar-tower .bar-fill').forEach(bar => {
+      if (!bar.dataset.targetHeight) bar.dataset.targetHeight = bar.style.height || '100%';
+      bar.style.height = '0%';
+    });
+    slide.querySelectorAll('.bar-row .bar-fill').forEach(bar => {
+      if (!bar.dataset.targetWidth) bar.dataset.targetWidth = bar.style.width || '100%';
+      bar.style.width = '0%';
+    });
+  }
+
+  restoreBars(slide) {
+    slide.querySelectorAll('.bar-tower .bar-fill').forEach(bar => {
+      bar.style.height = bar.dataset.targetHeight || bar.style.height || '100%';
+    });
+    slide.querySelectorAll('.bar-row .bar-fill').forEach(bar => {
+      bar.style.width = bar.dataset.targetWidth || bar.style.width || '100%';
+    });
+  }
+
+  animateCounters(slide, baseDelay = 0) {
+    const { animate } = this.anime;
+    const counters = [...slide.querySelectorAll('.stat-num, .num-mega, .bar-value, .bar-val, [data-count]')];
+    counters.forEach((el, i) => {
+      const info = this.parseCounter(el);
+      if (!info) return;
+      const state = { value: 0 };
+      animate(state, {
+        value: [0, info.value],
+        duration: 1200,
+        delay: baseDelay + i * 110,
+        ease: 'out(4)',
+        onRender: () => this.renderCounter(el, state.value, info),
+        onComplete: () => this.renderCounter(el, info.value, info),
+      });
+    });
+  }
+
+  restoreCounters(slide) {
+    slide.querySelectorAll('[data-counter-original]').forEach(el => {
+      el.innerHTML = el.dataset.counterOriginal;
+    });
+  }
+
+  parseCounter(el) {
+    if (!el.dataset.counterOriginal) el.dataset.counterOriginal = el.innerHTML;
+    const raw = el.dataset.count || el.dataset.value || el.textContent.trim();
+    const normalized = raw.replace(/,/g, '');
+    const match = normalized.match(/[-+]?\d*\.?\d+/);
+    if (!match) return null;
+
+    const value = Number(match[0]);
+    if (!Number.isFinite(value)) return null;
+
+    const rawMatch = raw.match(/[-+]?\d[\d,]*(?:\.\d+)?/);
+    const rawNumber = rawMatch ? rawMatch[0] : match[0];
+    const start = raw.indexOf(rawNumber);
+    const end = start + rawNumber.length;
+    const unitEl = el.querySelector('.num-unit');
+    const unitHTML = unitEl ? unitEl.outerHTML : (el.dataset.unit || '');
+    let suffix = el.dataset.suffix || raw.slice(end);
+    if (unitEl && suffix.includes(unitEl.textContent)) {
+      suffix = suffix.replace(unitEl.textContent, '');
+    }
+
+    return {
+      value,
+      decimals: (match[0].split('.')[1] || '').length,
+      prefix: el.dataset.prefix || (start > 0 ? raw.slice(0, start) : ''),
+      suffix,
+      unitHTML,
+      useGrouping: raw.includes(',') || Math.abs(value) >= 1000,
+    };
+  }
+
+  renderCounter(el, value, info) {
+    const formatted = Number(value).toLocaleString('en-US', {
+      minimumFractionDigits: info.decimals,
+      maximumFractionDigits: info.decimals,
+      useGrouping: info.useGrouping,
+    });
+    el.innerHTML = `${info.prefix}${formatted}${info.unitHTML}${info.suffix}`;
   }
 
   /* --- ESC Index --- */
@@ -1079,9 +1471,7 @@ class SlideEngine {
 
     // Force-show all current slide elements
     if (isLow) {
-      this.slides[this.current].querySelectorAll('[data-anim]').forEach(el => {
-        el.style.opacity = '1'; el.style.transform = 'none';
-      });
+      this.showSlide(this.slides[this.current]);
     }
   }
 
@@ -1092,20 +1482,43 @@ class SlideEngine {
     if (typeof lucide !== 'undefined') lucide.createIcons();
   }
 
-  /* --- Motion One Loader --- */
-  async loadMotion() {
-    try {
-      this.motion = await import('./motion.min.js');
-    } catch {
+  /* --- Anime.js Loader --- */
+  async loadAnime() {
+    if (window.anime) {
+      this.anime = window.anime;
+      return;
+    }
+
+    const sources = [
+      'https://cdn.jsdelivr.net/npm/animejs@4.4.1/dist/bundles/anime.umd.min.js',
+      './anime.umd.min.js',
+    ];
+
+    for (const src of sources) {
       try {
-        this.motion = await import('https://cdn.jsdelivr.net/npm/motion@11.11.17/+esm');
+        await this.loadScript(src);
+        if (window.anime) {
+          this.anime = window.anime;
+          return;
+        }
       } catch {
-        this.motion = null;
-        document.querySelectorAll('[data-anim]').forEach(el => {
-          el.style.opacity = '1'; el.style.transform = 'none';
-        });
+        // Try next source.
       }
     }
+
+    this.anime = null;
+    document.querySelectorAll('.slide').forEach(slide => this.showSlide(slide));
+  }
+
+  loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = src;
+      script.async = true;
+      script.onload = resolve;
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
   }
 
   /* --- WebGL Background --- */
@@ -1166,9 +1579,9 @@ class SlideEngine {
 
 /* --- Boot --- */
 const engine = new SlideEngine();
-await engine.loadMotion();
+await engine.loadAnime();
 engine.startWebGL();
-// Re-play first slide after motion loads
+// Re-play first slide after Anime.js loads
 engine.playSlide(0);
 </script>
 </body>

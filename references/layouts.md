@@ -53,7 +53,7 @@
     <span>Brand Name</span>
     <span>2026.06</span>
   </div>
-  <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-6)">
+  <div class="slide-body" style="justify-content:safe center;align-items:flex-start;gap:var(--sp-6)">
     <span class="kicker" data-anim>Kicker · 标签</span>
     <h1 class="h-hero" data-anim>
       演示标题
@@ -79,7 +79,7 @@
     <span>Brand</span>
     <span>Chapter</span>
   </div>
-  <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+  <div class="slide-body" style="justify-content:safe center;align-items:flex-start;gap:var(--sp-5)">
     <span class="kicker" data-anim>Part 01</span>
     <h2 class="h-xl" data-anim>
       章节标题
@@ -104,7 +104,7 @@
   <div class="chrome" data-anim>
     <span>Brand</span>
   </div>
-  <div class="slide-body" style="justify-content:center;align-items:center;text-align:center;gap:var(--sp-7)">
+  <div class="slide-body" style="justify-content:safe center;align-items:center;text-align:center;gap:var(--sp-7)">
     <h2 class="h-hero" data-anim>谢谢</h2>
     <p class="body-zh" data-anim style="opacity:0.6;max-width:35ch">
       联系方式或下一步行动号召
@@ -130,7 +130,7 @@
   <div class="chrome" data-anim>
     <span>Brand</span>
   </div>
-  <div class="slide-body" style="justify-content:center;gap:var(--sp-6)">
+  <div class="slide-body" style="justify-content:safe center;gap:var(--sp-6)">
     <div class="callout">
       <p class="q-big" data-anim="line">
         第一行引文，控制在整体
@@ -267,7 +267,7 @@
 ### U08 · Three Pillars 三支柱
 
 ```html
-<section class="slide" data-layout="U08" data-theme="light">
+<section class="slide" data-layout="U08" data-theme="light" data-animate="card-spring">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Framework</span>
@@ -308,7 +308,7 @@
 ### D01 · Stat Grid 数据大字报
 
 ```html
-<section class="slide" data-layout="D01" data-theme="light">
+<section class="slide" data-layout="D01" data-theme="light" data-animate="counter">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Data</span>
@@ -345,7 +345,7 @@
 ### D02 · KPI Tower 塔式柱图
 
 ```html
-<section class="slide" data-layout="D02" data-theme="dark">
+<section class="slide" data-layout="D02" data-theme="dark" data-animate="bar-grow">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Metrics</span>
@@ -387,7 +387,7 @@
 ### D03 · H-Bar Chart 横向排名
 
 ```html
-<section class="slide" data-layout="D03" data-theme="light">
+<section class="slide" data-layout="D03" data-theme="light" data-animate="bar-grow">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Ranking</span>
@@ -434,7 +434,7 @@
 ### D04 · V-Timeline 垂直时间线
 
 ```html
-<section class="slide" data-layout="D04" data-theme="light">
+<section class="slide" data-layout="D04" data-theme="light" data-animate="timeline-dots">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Timeline</span>
@@ -476,7 +476,7 @@
 ### D05 · H-Timeline 水平时间线
 
 ```html
-<section class="slide" data-layout="D05" data-theme="light">
+<section class="slide" data-layout="D05" data-theme="light" data-animate="timeline-dots">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Process</span>
@@ -518,7 +518,7 @@
 ### D06 · Matrix 矩阵网格
 
 ```html
-<section class="slide" data-layout="D06" data-theme="dark">
+<section class="slide" data-layout="D06" data-theme="dark" data-animate="matrix-scan">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Matrix</span>
@@ -582,12 +582,12 @@
 ### D08 · KPI Hero 大数字 Hero
 
 ```html
-<section class="slide hero" data-layout="D08" data-theme="light">
+<section class="slide hero" data-layout="D08" data-theme="light" data-animate="counter">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Key Metric</span>
   </div>
-  <div class="slide-body" style="justify-content:center;align-items:flex-start;gap:var(--sp-5)">
+  <div class="slide-body" style="justify-content:safe center;align-items:flex-start;gap:var(--sp-5)">
     <span class="kicker" data-anim>核心指标</span>
     <div data-anim>
       <span class="num-mega">64<i class="num-unit" style="font-size:0.3em">天</i></span>
@@ -651,7 +651,7 @@
 ### M02 · Image Grid 多图网格
 
 ```html
-<section class="slide" data-layout="M02" data-theme="light">
+<section class="slide" data-layout="M02" data-theme="light" data-animate="stagger-grid">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Gallery</span>
@@ -723,7 +723,7 @@
     <span>Brand</span>
     <span>Demo</span>
   </div>
-  <div class="slide-body" style="justify-content:center;align-items:center;gap:var(--sp-6)">
+  <div class="slide-body" style="justify-content:safe center;align-items:center;gap:var(--sp-6)">
     <h2 class="h-sub" data-anim style="text-align:center">产品截图</h2>
     <div class="frame-img fit-contain" data-anim style="max-height:60vh;max-width:85%;background:var(--ink-faint);padding:var(--sp-5)">
       <img src="images/screenshot.png" alt="Product Screenshot" style="border-radius:4px">
@@ -775,7 +775,7 @@
 ### M06 · System Diagram 架构/系统图
 
 ```html
-<section class="slide" data-layout="M06" data-theme="light">
+<section class="slide" data-layout="M06" data-theme="light" data-animate="svg-draw">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Architecture</span>
@@ -882,7 +882,7 @@
 ### X03 · Feature Cards 特性卡片
 
 ```html
-<section class="slide" data-layout="X03" data-theme="dark">
+<section class="slide" data-layout="X03" data-theme="dark" data-animate="card-spring">
   <div class="chrome" data-anim>
     <span>Brand</span>
     <span>Features</span>
